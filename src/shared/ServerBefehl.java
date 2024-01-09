@@ -1,0 +1,14 @@
+package shared;
+
+public enum ServerBefehl {
+    ANMELDEN,
+    REGISTRIEREN,
+    SEND_TEXT_MESSAGE,
+    GET_USER_LIST,
+    GET_MESSAGES_FROM,
+    SET_PASSWORD,
+    TEXT_MESSAGE,
+    SET_NICKNAME,
+    FEEDBACK,
+    ANMELDEN_ERFOLGREICH
+}
