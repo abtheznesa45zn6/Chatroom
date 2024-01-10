@@ -52,13 +52,12 @@ public abstract class AbstractClass extends Thread {
                 Message message = (Message) in.readObject();
                 System.out.println("angekommene Message: " + message.toString());
                 ausführenVon(message);
-            } catch (SocketException ignored) {
+            } catch (SocketException e) {
+                System.out.println("SocketException bei listenAndExecute");
+                return;
             } catch (EOFException e) {
                 System.out.println("EOFException bei listenAndExecute");
-                try {
-                    sleep(1000);
-                } catch (InterruptedException ignored) {
-                }
+                return;
             } catch (IOException e) {
                 System.out.println("IOException bei listenAndExecute");
                 e.printStackTrace();
@@ -92,10 +91,6 @@ public abstract class AbstractClass extends Thread {
             }
         }
     }
-
-    protected void abmelden(AbstractClass thread) {
-    }
-
 
     protected void sendMessage(ServerBefehl aktion, String... strings) {
         try {
@@ -153,5 +148,8 @@ public abstract class AbstractClass extends Thread {
 
     public boolean getAngemeldet() {
         return angemeldet;
+    }
+    public String getAngemeldeterNutzer() {
+        return angemeldeterNutzer;
     }
 }

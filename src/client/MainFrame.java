@@ -4,8 +4,6 @@ import shared.Message;
 import shared.ValidityChecker;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -13,8 +11,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public class MainFrame extends JFrame implements ValidityChecker {
@@ -22,6 +23,8 @@ public class MainFrame extends JFrame implements ValidityChecker {
     Client client;
 
     private String currentGroup = "global";
+
+    private HashMap<String, String> nicknameMap = new HashMap<>();
 
     public MainFrame(Client client) throws HeadlessException {
         this.client = client;
@@ -57,6 +60,7 @@ public class MainFrame extends JFrame implements ValidityChecker {
     private JTextArea feedbackTextArea;
     private JPanel cardObenRechts;
     private JButton abmeldenButton;
+    private JList listBenutzer;
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -130,9 +134,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
 
         //setNicknameTextField.setPreferredSize(new Dimension(w/10, h/26));
 
-        textAreaBenutzer.setText("abs /n asdo \n anfdo");
-        //textAreaRäume.setText("abs\nasdo\nanfdo");
-
 
         //rechts unten: feedbackTextArea
         //feedbackTextArea.setPreferredSize();
@@ -163,7 +164,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
                     userBenachritigen("Nickname ungültig");
                 }
                 else {
-                    labelNickname.setText(nickname);
                     client.setNicknameTo(nickname);
                 }
             }
@@ -199,17 +199,20 @@ public class MainFrame extends JFrame implements ValidityChecker {
         });
 
 
-        listRäume.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    String group = listRäume.getSelectedValue().toString();
-                    if (group != null) {
+        listRäume.addListSelectionListener(listSelectionEvent -> {
+            if (!listSelectionEvent.getValueIsAdjusting()) {
+
+                Object nullableGroup = listRäume.getSelectedValue();
+                if (nullableGroup == null){
+                    return;
+                }
+                else {
+                    String group = nullableGroup.toString();
                         System.out.println("Selected: " + group);
                         chatAusgabe.setText("");
                         currentGroup = group;
                         client.getMessagesFrom(group);
-                    }
+                        client.getUserList(group);
                 }
             }
         });
@@ -257,17 +260,29 @@ public class MainFrame extends JFrame implements ValidityChecker {
         String text = message.getStringAtIndex(2);
         LocalDateTime time = message.getTime();
 
+        // Formatting the time using DateTimeFormatter
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        String formattedTime = time.format(formatter);
+
 
         chatAusgabe.append("\n"
                 +"["
-                +time.getHour()
-                +":"
-                +time.getMinute()
+                +formattedTime
                 +"]"
                 +" "
-                +user
+                +nicknameOfUser(user)
                 +": "
                 +text);
+    }
+
+    private String nicknameOfUser(String user) {
+        String nullableNickname = nicknameMap.get(user);
+        if (nullableNickname == null) {
+            return user;
+        }
+        else {
+            return nullableNickname;
+        }
     }
 
 
@@ -295,6 +310,17 @@ public class MainFrame extends JFrame implements ValidityChecker {
         listRäume.setModel(listModel);
     }
 
+    public void updateUsers(String group, ArrayList<String> users) {
+        if(currentGroup.equals(group)){
+            DefaultListModel<String> listModel = new DefaultListModel<>();
+            for (String user : users) {
+                String line = nicknameOfUser(user) + " (" + user + ")";
+                listModel.addElement(line);
+            }
+            listBenutzer.setModel(listModel);
+        }
+    }
+
 
     void addFeedback (String feedbackLine) {
         feedbackTextArea.append("\n"+feedbackLine);
@@ -303,7 +329,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
 
     // von ChatGPT
     private static void removeExcessLines(JTextArea textArea) {
-        String text = textArea.getText();
         int lineCount = textArea.getLineCount();
         int MAX_LINES = 12;
 
@@ -321,5 +346,13 @@ public class MainFrame extends JFrame implements ValidityChecker {
         }
     }
 
+    public void updateNicknameList(HashMap<String, String> updatedMap) {
+        String nullableNickname = updatedMap.get(client.getAngemeldeterNutzer());
+        if (nullableNickname!=null && !(nullableNickname.equals(nicknameMap.get(client.getAngemeldeterNutzer())))){
+            labelNickname.setText(nullableNickname);
+            userBenachritigen("Nickname wurde geändert zu "+nullableNickname);
+        }
 
+        nicknameMap = updatedMap;
+    }
 }

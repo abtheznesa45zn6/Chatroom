@@ -35,7 +35,8 @@ class Database {
             // Create users table
             String createUserTableQuery = "CREATE TABLE IF NOT EXISTS users (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    "username TEXT UNIQUE);";
+                    "username TEXT UNIQUE," +
+                    "nickname TEXT);";
             statement.executeUpdate(createUserTableQuery);
 
             // Create groups table
@@ -113,6 +114,17 @@ class Database {
             }
         }
     }
+
+    public HashSet<ClientHandler> getAllThreads() {
+        HashSet<ClientHandler> allClientHandlers = new HashSet<>();
+        synchronized (groupAndThread) {
+            for (HashSet<ClientHandler> clientHandlers : groupAndThread.values()) {
+                allClientHandlers.addAll(clientHandlers);
+            }
+        }
+        return allClientHandlers;
+    }
+
 
     // Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
     String getPasswordForUser(String username) {
@@ -233,6 +245,7 @@ class Database {
         }
     }
 
+
     public void addUser(String username) {
         try {
             semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
@@ -268,6 +281,65 @@ class Database {
         }
     }
 
+    public List<String> getUsernamesInGroup(String group) {
+        List<String> usernamesInGroup = new ArrayList<>();
+
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+                // Retrieve usernames in the specified group
+                String query = "SELECT users.username FROM users " +
+                        "JOIN user_groups ON users.id = user_groups.user_id " +
+                        "JOIN groups ON user_groups.group_id = groups.id " +
+                        "WHERE groups.group_name = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, group);
+
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            String username = resultSet.getString("username");
+                            usernamesInGroup.add(username);
+                        }
+                    }
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+
+        return usernamesInGroup;
+    }
+
+    public Collection<String> getAllNicknames() {
+        List<String> usersWithNicknames = new ArrayList<>();
+
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+                String query = "SELECT username, nickname FROM users";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String username = resultSet.getString("username");
+                        String nickname = resultSet.getString("nickname");
+                        if (nickname!=null){
+                            usersWithNicknames.add(username);
+                            usersWithNicknames.add(nickname);
+                        }
+                    }
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+
+        return usersWithNicknames;
+    }
+
 
 
     void addUserAndThreadToGroup(ClientHandler thread, String user, String group) {
@@ -275,7 +347,7 @@ class Database {
         addUserToGroup(user, group);
     }
 
-    HashSet<ClientHandler> getUsersOfGroup (String group) {
+    HashSet<ClientHandler> getThreadsOfGroup(String group) {
         return groupAndThread.get(group);
     }
 
@@ -314,6 +386,34 @@ class Database {
         }
     }
 
+    public boolean setNicknameForUser(String nickname, String username) {
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+                // Check if the user exists
+                if (!userExists(connection, username)) {
+                    System.out.println("User not found: " + username);
+                    return false;
+                }
+
+                // Update the nickname
+                String updateNicknameQuery = "UPDATE users SET nickname = ? WHERE username = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateNicknameQuery)) {
+                    preparedStatement.setString(1, nickname);
+                    preparedStatement.setString(2, username);
+
+                    preparedStatement.executeUpdate();
+                    return true;
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+    }
+
     List<String> getAllGroups() {
         List<String> allGroups = new ArrayList<>();
 
@@ -340,15 +440,3 @@ class Database {
 }
 
 
-// Group
-// alle Nachrichten in einer LinkedList
-// wenn eine neue Nachricht rein kommt, wird sie vorne gespeichert und hinten eine zu weak reference
-// Stream -> neue Nachricht ->  write file -> observer update -> weak link
-
-// Deque
-// keep time of last element
-// time > threshold -> remove item, read time of next
-// bei jeder Anfrage, alle Nachrichten zu bekommen, überprüfen, ob Zeit des letzten LEments eingehalten ist
-
-// LinkedHashSet
-// first() last()

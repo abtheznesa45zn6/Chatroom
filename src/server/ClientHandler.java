@@ -33,10 +33,14 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case GET_MESSAGES_FROM -> getMessagesFrom(message);
             case SET_PASSWORD -> changePassword(message);
             case GET_GROUPS -> sendGroups(message);
+            case GET_USER_LIST -> sendUserList(message);
             case SET_NICKNAME -> setNickname(message);
+            case GET_ALL_NICKNAMES -> sendAllNicknames();
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
+
+
 
     private void registrieren(Message message) {
         String user = message.getStringAtIndex(0);
@@ -63,18 +67,20 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             if (database.getPasswordForUser(user).equals(password)) {
 
                 if (angemeldet) {
-                    abmelden(this);
+                    abmelden();
                 }
 
                 // Der neue User/Thread wird der default Gruppe "global" hinzugefügt
                 database.addGroup("global");
                 database.addUserAndThreadToGroup(this, user, "global");
+                sendGroups(message);
+                sendAllNicknames();
 
                 // Test
-                database.addUserAndThreadToGroup(this, user,"Off Topic");
-                database.addUserAndThreadToGroup(this, user,"Testgruppe");
                 database.addGroup("Testgruppe");
                 database.addGroup("Off Topic");
+                database.addUserAndThreadToGroup(this, user,"Off Topic");
+                database.addUserAndThreadToGroup(this, user,"Testgruppe");
 
                 angemeldet = true;
                 angemeldeterNutzer = user;
@@ -117,16 +123,22 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     private void sendTextMessageToAllClientsInGroup(Message message) {
         String group = message.getStringAtIndex(0);
 
-        HashSet<ClientHandler> users = database.getUsersOfGroup(group);
+        HashSet<ClientHandler> users = database.getThreadsOfGroup(group);
         for (ClientHandler serverThread : users) {
             serverThread.sendTextMessageToClient(message);
+        }
+    }
+
+    private void sendTextMessageToAllClients(Message message) {
+        HashSet<ClientHandler> clients = database.getAllThreads();
+        for (ClientHandler client : clients) {
+            sendMessage(message);
         }
     }
 
     private void sendTextMessageToClient (Message message) {
         sendMessage(message);
     }
-
 
     private void getMessagesFrom(Message message) {
         String group = message.getStringAtIndex(0);
@@ -165,13 +177,37 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         sendMessage(ServerBefehl.RECEIVE_GROUPS, groups.toArray(new String[0]));
     }
 
-    private void setNickname(Message message) {
-        String nickname = message.getStringAtIndex(0);
-        System.out.println("setting nick to "+nickname);
-        //
-        //
+    private void sendUserList(Message message) {
+        String group = message.getStringAtIndex(0);
+        String user = message.getStringAtIndex(1);
+        if (this.angemeldeterNutzer.equals(user)){
+            ArrayList<String> users = new ArrayList<>();
+            users.add(group); // first element of String[] is the group
+
+            users.addAll(database.getUsernamesInGroup(group));
+
+            sendMessage(ServerBefehl.RECEIVE_USER_LIST, users.toArray(new String[0]));
+        }
     }
 
+    private void setNickname(Message message) {
+        String user = message.getStringAtIndex(0);
+        String nickname = message.getStringAtIndex(1);
+        if (user.equals(angemeldeterNutzer)) {
+            if (database.setNicknameForUser(nickname, user)){
+                Message messageToSend = new Message(ServerBefehl.SET_NICKNAME, new String[]{user, nickname});
+                sendTextMessageToClient(messageToSend);
+                System.out.printf("Nickname von Nutzer %s wurde zu %s ist geändert.\n", angemeldeterNutzer, nickname);
+            }
+        }
+        System.out.printf("Nickname von %s zu ändern ist gescheitert.\n", angemeldeterNutzer);
+    }
+
+    private void sendAllNicknames() {
+        ArrayList<String> users = new ArrayList<>(database.getAllNicknames());
+
+        sendMessage(ServerBefehl.RECEIVE_NICKNAME_LIST, users.toArray(new String[0]));
+    }
 }
 
 

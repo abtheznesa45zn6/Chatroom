@@ -64,15 +64,16 @@ class Client extends AbstractClass implements ValidityChecker {
         if (message == null) {return;}
 
         switch (message.getAktion()) {
-            case GET_USER_LIST -> getUserList();
             case ANMELDEN_ERFOLGREICH -> nutzerAnmelden(message);
             case FEEDBACK -> feedback(message);
             case TEXT_MESSAGE -> receiveTextMessage(message);
             case RECEIVE_GROUPS -> receiveGroups(message);
+            case RECEIVE_USER_LIST -> receiveUserList(message);
+            case SET_NICKNAME -> updateNicknames(message);
+            case RECEIVE_NICKNAME_LIST -> receiveNicknameList(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         };
     }
-
 
 
 
@@ -103,15 +104,8 @@ class Client extends AbstractClass implements ValidityChecker {
         sendMessage(ServerBefehl.GET_MESSAGES_FROM, group);
     }
 
-    void getUserList() {
-        write(ServerBefehl.GET_USER_LIST, angemeldeterNutzer, angemeldetesPasswort);
-
-        int keySetSize = readInt();
-        for (int i = 0; i < keySetSize; i++) {
-            String key = readText(); // Read each key as a UTF-encoded string
-            userList.add(key);
-        }
-        // update the user list
+    void getUserList(String group) {
+        sendMessage(ServerBefehl.GET_USER_LIST, group, angemeldeterNutzer);
     }
 
     protected TextMessage readTextMessage()  {
@@ -153,6 +147,32 @@ class Client extends AbstractClass implements ValidityChecker {
     private void receiveGroups(Message message) {
         var groups = new ArrayList<String>(Arrays.asList(message.getStringArray()));
         clientGUI.updateRooms(groups);
+    }
+
+    private void receiveUserList(Message message) {
+        var groupAndUsers = new ArrayList<String>(Arrays.asList(message.getStringArray()));
+        String group = groupAndUsers.remove(0);
+        clientGUI.updateUsers(group, groupAndUsers);
+    }
+
+    private void updateNicknames(Message message) {
+        String user = message.getStringAtIndex(0);
+        String nickname = message.getStringAtIndex(1);
+        // ee
+        sendMessage(ServerBefehl.GET_ALL_NICKNAMES);
+    }
+
+
+    private void receiveNicknameList(Message message) {
+        HashMap<String, String> map = new HashMap<>();
+
+        for (int i = 0; i < message.getStringArray().length; i += 2) {
+            String username = message.getStringArray()[i];
+            String nickname = message.getStringArray()[i+1];
+
+            map.put(username, nickname);
+        }
+        clientGUI.updateNicknameList(map);
     }
 
 
