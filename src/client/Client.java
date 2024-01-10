@@ -49,6 +49,7 @@ class Client extends AbstractClass implements ValidityChecker {
             out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask234", "asd23424a"}));
             out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask", "asdf2342423423523456a"}));
             out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask", "asdfa"}));
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -63,15 +64,15 @@ class Client extends AbstractClass implements ValidityChecker {
         if (message == null) {return;}
 
         switch (message.getAktion()) {
-            case GET_MESSAGES_FROM -> getMessagesFrom(message);
             case GET_USER_LIST -> getUserList();
-            case SET_PASSWORD -> changePassword(message);
             case ANMELDEN_ERFOLGREICH -> nutzerAnmelden(message);
             case FEEDBACK -> feedback(message);
             case TEXT_MESSAGE -> receiveTextMessage(message);
+            case RECEIVE_GROUPS -> receiveGroups(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         };
     }
+
 
 
 
@@ -84,6 +85,9 @@ class Client extends AbstractClass implements ValidityChecker {
     void anmelden(String user, String password) {
         sendMessage(ServerBefehl.ANMELDEN, user, password);
     }
+    void abmelden() {
+        sendMessage(ServerBefehl.ABMELDEN);
+    }
 
     void setNicknameTo(String nickname) {
         sendMessage(ServerBefehl.SET_NICKNAME, angemeldeterNutzer, nickname);
@@ -95,17 +99,8 @@ class Client extends AbstractClass implements ValidityChecker {
         sendMessage(ServerBefehl.TEXT_MESSAGE, group, angemeldeterNutzer, text);
     }
 
-    void getMessagesFrom(Message message) {
-        String group = message.getStringAtIndex(0);
-        write(ServerBefehl.GET_MESSAGES_FROM, group);
-        ArrayList<TextMessage> textMessages = new ArrayList<>();
-
-        int sizeOfList = readInt();
-        for (int i = 0; i < sizeOfList; i++) {
-            TextMessage msgObject = readTextMessage();
-            textMessages.add(msgObject);
-        }
-        // update the messages
+    void getMessagesFrom(String group) {
+        sendMessage(ServerBefehl.GET_MESSAGES_FROM, group);
     }
 
     void getUserList() {
@@ -133,9 +128,8 @@ class Client extends AbstractClass implements ValidityChecker {
         }
     }
 
-    void changePassword(Message message) {
-        String neuesPasswort = message.getStringAtIndex(0);
-        sendMessage(ServerBefehl.SET_PASSWORD, angemeldeterNutzer, angemeldetesPasswort,neuesPasswort);
+    void changePassword(String neuesPasswort) {
+        sendMessage(ServerBefehl.SET_PASSWORD, angemeldeterNutzer, angemeldetesPasswort, neuesPasswort);
     }
 
     private void nutzerAnmelden(Message message) {
@@ -143,6 +137,7 @@ class Client extends AbstractClass implements ValidityChecker {
         angemeldet = true;
         angemeldeterNutzer = user;
         clientGUI.setNickname(user);
+        sendRequestForGroupList(user);
     }
 
     private void feedback(Message message) {
@@ -152,8 +147,14 @@ class Client extends AbstractClass implements ValidityChecker {
 
     private void receiveTextMessage(Message message) {
         showMessageInGUI(message);
-        saveMessageToCache(message);
+        //saveMessageToCache(message);
     }
+
+    private void receiveGroups(Message message) {
+        var groups = new ArrayList<String>(Arrays.asList(message.getStringArray()));
+        clientGUI.updateRooms(groups);
+    }
+
 
     private void saveMessageToCache(Message message) {
         String group = message.getStringAtIndex(0);
@@ -162,7 +163,7 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
     private void showMessageInGUI(Message message) {
-        clientGUI.showMessageInGUI(message);
+        clientGUI.showMessageInGUIIfCurrentGroup(message);
     }
 
     private void getAllMessagesFromRoom () {
@@ -209,4 +210,7 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
 
+    private void sendRequestForGroupList(String user) {
+        sendMessage(ServerBefehl.GET_GROUPS, user);
+    }
 }

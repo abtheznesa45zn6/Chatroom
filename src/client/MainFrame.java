@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
 
@@ -21,10 +22,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
     Client client;
 
     private String currentGroup = "global";
-
-    public MainFrame() throws HeadlessException {
-        init();
-    }
 
     public MainFrame(Client client) throws HeadlessException {
         this.client = client;
@@ -59,6 +56,7 @@ public class MainFrame extends JFrame implements ValidityChecker {
     private JButton registrierenButton;
     private JTextArea feedbackTextArea;
     private JPanel cardObenRechts;
+    private JButton abmeldenButton;
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -80,7 +78,8 @@ public class MainFrame extends JFrame implements ValidityChecker {
                 new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        client.beenden();
+                        client.abmelden();
+                        client.beenden(client);
                         dispose();
                     }
                 });
@@ -135,14 +134,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
         //textAreaRäume.setText("abs\nasdo\nanfdo");
 
 
-
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        listModel.addElement("Item 1");
-        listModel.addElement("Item 2");
-        listModel.addElement("Item 3");
-
-        listRäume.setModel(listModel);
-
         //rechts unten: feedbackTextArea
         //feedbackTextArea.setPreferredSize();
         feedbackTextArea.setMaximumSize(new Dimension(w-k, h/4));
@@ -173,7 +164,7 @@ public class MainFrame extends JFrame implements ValidityChecker {
                 }
                 else {
                     labelNickname.setText(nickname);
-
+                    client.setNicknameTo(nickname);
                 }
             }
         });
@@ -183,12 +174,27 @@ public class MainFrame extends JFrame implements ValidityChecker {
             public void actionPerformed(ActionEvent e) {
                 String textMessage = getAndReset(chatEingabe);
 
-                if (checkValidityOfText(textMessage)) {
-                    client.sendTextMessage(currentGroup, textMessage);
+                if (client.getAngemeldet()) {
+                    if (checkValidityOfText(textMessage)) {
+                        client.sendTextMessage(currentGroup, textMessage);
+                    }
+                    else {
+                        userBenachritigen("Nachricht ungültig");
+                    }
                 }
                 else {
-                    userBenachritigen("Nachricht ungültig");
+                    userBenachritigen("Du bist nicht angemeldet.");
                 }
+
+            }
+        });
+
+        abmeldenButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                client.abmelden();
+                card2.setVisible(false);
+                card1.setVisible(true);
             }
         });
 
@@ -197,11 +203,12 @@ public class MainFrame extends JFrame implements ValidityChecker {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                    // Perform action based on the selected item
-                    String selectedItem = listRäume.getSelectedValue().toString();
-                    if (selectedItem != null) {
-                        System.out.println("Selected: " + selectedItem);
-                        // Perform your action here
+                    String group = listRäume.getSelectedValue().toString();
+                    if (group != null) {
+                        System.out.println("Selected: " + group);
+                        chatAusgabe.setText("");
+                        currentGroup = group;
+                        client.getMessagesFrom(group);
                     }
                 }
             }
@@ -266,7 +273,7 @@ public class MainFrame extends JFrame implements ValidityChecker {
 
     // API für Client
 
-    void showMessageInGUI(Message message) {
+    void showMessageInGUIIfCurrentGroup(Message message) {
         String group = message.getStringAtIndex(0);
 
         if (currentGroup.equals(group)) {
@@ -280,7 +287,12 @@ public class MainFrame extends JFrame implements ValidityChecker {
         card1.setVisible(false);
     }
 
-    void updateRooms (String[] rooms) {
+    void updateRooms (ArrayList<String> rooms) {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String group : rooms) {
+            listModel.addElement(group);
+        }
+        listRäume.setModel(listModel);
     }
 
 

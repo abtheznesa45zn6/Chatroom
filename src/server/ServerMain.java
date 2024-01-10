@@ -24,6 +24,12 @@ public class ServerMain {
                     System.out.println("Server interrupted");
                     return;
                 }
+                case "test" -> {
+                    for (String group : Database.getInstance().getGroupsForUser("ask")) {
+                        System.out.println("User is in group: " + group);
+                    }
+                    System.out.println("vollständig ausgegeben");
+                }
                 default -> System.out.printf("%s?\n", eingabe);
             }
         }

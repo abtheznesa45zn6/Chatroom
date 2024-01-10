@@ -284,6 +284,12 @@
                                   <text value="einstellen"/>
                                 </properties>
                               </component>
+                              <component id="a1b58" class="javax.swing.JButton" binding="abmeldenButton" default-binding="true">
+                                <constraints/>
+                                <properties>
+                                  <text value="abmelden"/>
+                                </properties>
+                              </component>
                             </children>
                           </grid>
                         </children>

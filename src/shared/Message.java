@@ -41,6 +41,10 @@ public class Message implements Serializable {
         }
     }
 
+    public String[] getStringArray() {
+        return stringArray;
+    }
+
     @Override
     public String toString() {
         return "Message{" +

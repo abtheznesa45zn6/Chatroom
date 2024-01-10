@@ -1,9 +1,11 @@
 package shared;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 public abstract class AbstractClass extends Thread {
     protected final Socket socket;
@@ -18,7 +20,6 @@ public abstract class AbstractClass extends Thread {
     }
 
 
-
     @Override
     public void run() {
         establishStreamsAndRun();
@@ -31,15 +32,13 @@ public abstract class AbstractClass extends Thread {
             this.in = new ObjectInputStream(socket.getInputStream());
             dingeTun();
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        finally {
+        } catch (IOException ignored) {
+        } finally {
             // Nötig, um den Socket von ClientHandler zu schließen
             try {
-                System.out.println("Socket is "+(this.socket.isClosed()?"closed" : "not closed"));
-                this.socket.close();
-                System.out.println("Socket is "+(this.socket.isClosed()?"closed" : "not closed"));
+                System.out.println("Socket is " + (this.socket.isClosed() ? "closed" : "not closed"));
+                socket.close();
+                System.out.println("Socket is " + (this.socket.isClosed() ? "closed" : "not closed"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -50,12 +49,20 @@ public abstract class AbstractClass extends Thread {
     protected void listenAndExecute() {
         while (!isInterrupted()) {
             try {
-                Message message = (Message) in.readObject(); // decorate with bufferedstream, then use if(.available>0)
-                System.out.println("angekommene Message: "+message.toString());
+                Message message = (Message) in.readObject();
+                System.out.println("angekommene Message: " + message.toString());
                 ausführenVon(message);
+            } catch (SocketException ignored) {
+            } catch (EOFException e) {
+                System.out.println("EOFException bei listenAndExecute");
+                try {
+                    sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
             } catch (IOException e) {
-                System.out.println("RuntimeException");
-                throw new RuntimeException(e);
+                System.out.println("IOException bei listenAndExecute");
+                e.printStackTrace();
+                return;
             } catch (ClassNotFoundException e) {
                 System.out.println("ClassNotFoundException");
             }
@@ -67,29 +74,27 @@ public abstract class AbstractClass extends Thread {
 
     protected abstract void dingeTun();
 
-    public void beenden() {
-        Thread.currentThread().interrupt();
+    public void beenden(AbstractClass thread) {
+        thread.interrupt();
+
         try {
-            sleep(2000);
-            this.socket.shutdownOutput();
-            this.socket.shutdownInput();
-            this.socket.close();
-        } catch (InterruptedException e) {
-            return;
+            socket.shutdownOutput();
+            socket.shutdownInput();
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        finally {
+            System.out.println("IOException in beenden");
+        } finally {
             try {
-                if (this.socket != null && !this.socket.isClosed()) {
-                    this.socket.close();
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-    };
+    }
 
+    protected void abmelden(AbstractClass thread) {
+    }
 
 
     protected void sendMessage(ServerBefehl aktion, String... strings) {
@@ -110,7 +115,7 @@ public abstract class AbstractClass extends Thread {
     }
 
 
-    protected String readText()  {
+    protected String readText() {
         try {
             return (String) in.readObject();
         } catch (IOException | ClassNotFoundException e) {
@@ -120,7 +125,7 @@ public abstract class AbstractClass extends Thread {
         return null;
     }
 
-    protected Integer readInt()  {
+    protected Integer readInt() {
         try {
             return (Integer) in.readObject();
         } catch (IOException | ClassNotFoundException e) {
@@ -130,7 +135,7 @@ public abstract class AbstractClass extends Thread {
         return null;
     }
 
-    protected void write (String text) {
+    protected void write(String text) {
         try {
             out.writeObject(text);
         } catch (IOException e) {
@@ -138,11 +143,15 @@ public abstract class AbstractClass extends Thread {
         }
     }
 
-    protected void write (int zahl) {
+    protected void write(int zahl) {
         try {
             out.writeObject(zahl);
         } catch (IOException e) {
             System.out.println("Exception bei write Integer");
         }
+    }
+
+    public boolean getAngemeldet() {
+        return angemeldet;
     }
 }

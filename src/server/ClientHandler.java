@@ -3,10 +3,7 @@ package server;
 import shared.*;
 
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 // https://hyperskill.org/learn/step/15639
 
@@ -16,11 +13,12 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     public ClientHandler(Socket socket) {
         super(socket);
     }
-    private Database database = Database.getInstance();
+    private final Database database = Database.getInstance();
 
     @Override
     protected void dingeTun() {
       listenAndExecute();
+      database.removeThreadFromAllGroups(this);
     }
 
 
@@ -30,16 +28,17 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         switch (message.getAktion()) {
             case REGISTRIEREN -> registrieren(message);
             case ANMELDEN -> anmelden(message);
+            case ABMELDEN -> abmelden();
             case TEXT_MESSAGE -> receiveTextMessage(message);
             case GET_MESSAGES_FROM -> getMessagesFrom(message);
-            case GET_USER_LIST -> sendUserList(message);
             case SET_PASSWORD -> changePassword(message);
+            case GET_GROUPS -> sendGroups(message);
+            case SET_NICKNAME -> setNickname(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
-        };
+        }
     }
 
     private void registrieren(Message message) {
-        System.out.println("reg");
         String user = message.getStringAtIndex(0);
         String password = message.getStringAtIndex(1);
 
@@ -50,6 +49,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             sendMessage(ServerBefehl.FEEDBACK, "Name bereits vorhanden");
         } else {
             database.setUserAndPassword(user, password);
+            database.addUser(user);
             sendMessage(ServerBefehl.FEEDBACK, "Registration erfolgreich");
             System.out.println("client " + user + " registriert.");
         }
@@ -62,14 +62,19 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         if (database.isRegistriert(user)) {
             if (database.getPasswordForUser(user).equals(password)) {
 
-                if (angemeldet = true) {
-                    abmelden();
+                if (angemeldet) {
+                    abmelden(this);
                 }
 
                 // Der neue User/Thread wird der default Gruppe "global" hinzugefügt
-                database.addThreadToGroup(this, "global");
-                database.addThreadToGroup(this, "Off Topic");
-                database.addThreadToGroup(this, "Testgruppe");
+                database.addGroup("global");
+                database.addUserAndThreadToGroup(this, user, "global");
+
+                // Test
+                database.addUserAndThreadToGroup(this, user,"Off Topic");
+                database.addUserAndThreadToGroup(this, user,"Testgruppe");
+                database.addGroup("Testgruppe");
+                database.addGroup("Off Topic");
 
                 angemeldet = true;
                 angemeldeterNutzer = user;
@@ -97,7 +102,9 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String angemeldeterNutzer = message.getStringAtIndex(1);
         String text = message.getStringAtIndex(2);
 
-        if (database.currentThreadIsInGroup(this, group)) {
+        if (!this.angemeldeterNutzer.equals(angemeldeterNutzer)) {return;}
+
+        if (database.currentUserIsInGroup(angemeldeterNutzer, group)) {
             Message messageToSend = new Message(ServerBefehl.TEXT_MESSAGE, new String[] {group, angemeldeterNutzer, text});
             database.addMessage(messageToSend);
             sendTextMessageToAllClientsInGroup(messageToSend);
@@ -125,38 +132,46 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String group = message.getStringAtIndex(0);
         ArrayList<Message> messages = database.messages.get(group);
 
-        write(messages.size());
-        for (Message msgObject : messages) {
+        if (messages != null) {
+            for (Message msgObject : messages) {
             sendMessage(msgObject);
-        }
-    }
-
-    private void sendUserList(Message message) {
-        write(database.getUserSet().size()); // Write the size of the keyset
-        for (String key : database.getUserSet()) {
-            write(key);
+            }
         }
     }
 
     private void changePassword(Message message) {
         String user = message.getStringAtIndex(0);
         String password = message.getStringAtIndex(1);
-        String neuesPasswort = readText();
+        String neuesPasswort = message.getStringAtIndex(2);
         String altesPasswort = database.getPasswordForUser(user);
 
         if (altesPasswort == null) {
             sendMessage(ServerBefehl.FEEDBACK, "Benutzername nicht vorhanden");
         }
-
-        if(altesPasswort.equals(password))
-        {
-            database.setPasswordForUser(neuesPasswort, user);
-            sendMessage(ServerBefehl.FEEDBACK, "Passwort wurde geändert");
-        }
         else {
-            sendMessage(ServerBefehl.FEEDBACK, "Passwort ist falsch");
+            if(altesPasswort.equals(password)) {
+                database.setPasswordForUser(neuesPasswort, user);
+                sendMessage(ServerBefehl.FEEDBACK, "Passwort wurde geändert");
+            }
+            else {
+                sendMessage(ServerBefehl.FEEDBACK, "Passwort ist falsch");
+            }
         }
     }
+
+    private void sendGroups(Message message) {
+        String user = message.getStringAtIndex(0);
+        List<String> groups = database.getGroupsForUser(user);
+        sendMessage(ServerBefehl.RECEIVE_GROUPS, groups.toArray(new String[0]));
+    }
+
+    private void setNickname(Message message) {
+        String nickname = message.getStringAtIndex(0);
+        System.out.println("setting nick to "+nickname);
+        //
+        //
+    }
+
 }
 
 
