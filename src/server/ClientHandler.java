@@ -204,7 +204,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     }
 
     private void sendAllNicknames() {
-        ArrayList<String> users = new ArrayList<>(database.getAllNicknames());
+        ArrayList<String> users = new ArrayList<>(database.getNicknamesAsList());
 
         sendMessage(ServerBefehl.RECEIVE_NICKNAME_LIST, users.toArray(new String[0]));
     }

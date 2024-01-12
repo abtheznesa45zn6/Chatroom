@@ -9,7 +9,14 @@ public class ServerMain {
         ConnectionListener server = new ConnectionListener();
         server.start();
 
-        listenForServerCommands(server);
+        ServerGUI serverGUI = new ServerGUI(server);
+        serverGUI.init();
+
+        try {
+            server.join();
+        } catch (InterruptedException ignored) {
+            server.interrupt();
+        }
 
         System.out.println("Server beendet");
     }

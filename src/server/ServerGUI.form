@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="server.ServerGUI">
+  <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties>
+      <enabled value="false"/>
+      <foreground color="-13947600"/>
+    </properties>
+    <border type="etched"/>
+    <children>
+      <grid id="8024b" binding="ebene1Links" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="West"/>
+        <properties/>
+        <border type="none" title="Serverlog"/>
+        <children>
+          <scrollpane id="c73af">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="795db" class="javax.swing.JTextArea" binding="serverlogAusgabe">
+                <constraints/>
+                <properties>
+                  <columns value="10"/>
+                  <editable value="false"/>
+                  <rows value="10"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+        </children>
+      </grid>
+      <grid id="be112" binding="ebene1Rechts" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="East"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="91aae" binding="ebene2RechtsOben" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="North"/>
+            <properties/>
+            <border type="none" title="Status"/>
+            <children>
+              <tabbedpane id="c6bc1" binding="tabbedPane" default-binding="true">
+                <constraints border-constraint="Center"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <grid id="7e577" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Benutzer"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="3af53" class="javax.swing.JList" binding="benutzerList">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="aa544" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Räume"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="4a890" class="javax.swing.JList" binding="räumeList">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="b57e4" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Server"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="e958b" layout-manager="BorderLayout" hgap="0" vgap="0">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <scrollpane id="99bd7">
+                            <constraints border-constraint="Center"/>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="7659" class="javax.swing.JList" binding="serverListAlleBenutzer">
+                                <constraints/>
+                                <properties/>
+                              </component>
+                            </children>
+                          </scrollpane>
+                          <component id="98b6f" class="javax.swing.JLabel">
+                            <constraints border-constraint="North"/>
+                            <properties>
+                              <text value="Alle Benutzer:"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="b5fef" layout-manager="BorderLayout" hgap="0" vgap="0">
+                        <constraints border-constraint="North"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="afbec" class="javax.swing.JLabel">
+                            <constraints border-constraint="Center"/>
+                            <properties>
+                              <horizontalAlignment value="2"/>
+                              <horizontalTextPosition value="0"/>
+                              <text value="Server ist online."/>
+                              <verticalAlignment value="0"/>
+                              <verticalTextPosition value="0"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                </children>
+              </tabbedpane>
+            </children>
+          </grid>
+          <grid id="785ad" binding="ebene2RechtsUnten" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none" title="Aufgaben"/>
+            <children>
+              <grid id="ecc65" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="North"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <grid id="d3439" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+                    <constraints border-constraint="West"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="c664e" class="javax.swing.JTextField" binding="aufgabenEingabe">
+                        <constraints/>
+                        <properties>
+                          <columns value="12"/>
+                        </properties>
+                      </component>
+                      <component id="364fa" class="javax.swing.JComboBox" binding="aufgabenComboBox">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                      <component id="97dcc" class="javax.swing.JButton" binding="okButton" default-binding="true">
+                        <constraints/>
+                        <properties>
+                          <text value="Ok"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="d2723" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+                    <constraints border-constraint="North"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="5753b" class="javax.swing.JLabel" binding="selectedItem">
+                        <constraints/>
+                        <properties>
+                          <text value="nichts ausgewählt"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <component id="23fb8" class="javax.swing.JLabel" binding="feedbackLabel">
+                    <constraints border-constraint="South"/>
+                    <properties>
+                      <text value=""/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

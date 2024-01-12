@@ -158,7 +158,7 @@ class Client extends AbstractClass implements ValidityChecker {
     private void updateNicknames(Message message) {
         String user = message.getStringAtIndex(0);
         String nickname = message.getStringAtIndex(1);
-        // ee
+        // here should be a code that doesn't require requesting all nicknames again instead
         sendMessage(ServerBefehl.GET_ALL_NICKNAMES);
     }
 
@@ -188,45 +188,6 @@ class Client extends AbstractClass implements ValidityChecker {
 
     private void getAllMessagesFromRoom () {
 
-    }
-
-
-    private void write (ServerBefehl aktion, String... strings) {
-        try {
-            out.writeObject(aktion);
-            for (String string : strings) {
-                out.writeObject(string);
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /*
-    private void write (ServerBefehl aktion, String info1, String info2) {
-        try {
-            out.writeObject(new SystemMessage(aktion, info1, info2));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void write(ServerBefehl aktion, String info1) {
-        try {
-            out.writeObject(new SystemMessage(aktion, info1));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-     */
-
-    private void trenneVerbindung() {
-        try {
-            socket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 

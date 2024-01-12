@@ -10,7 +10,14 @@ import java.util.concurrent.Semaphore;
 class Database {
     private SQLiteDataSource dataSource;
     private final Semaphore semaphoreSQLite;
+    // speichert Benutzername und Passwort
 
+    final Map<String, String> userAndPassword = Collections.synchronizedMap(new HashMap<String, String>());
+
+    // groupAndThread: Speichert ClientHandler nach den Gruppen ab, in denen der dazugehörige User ist
+    final Map<String, HashSet<ClientHandler>> groupAndThread = Collections.synchronizedMap(new HashMap<String, HashSet<ClientHandler>>());
+
+    final Map<String, ArrayList<Message>> messages = Collections.synchronizedMap(new HashMap<String, ArrayList<Message>>());
 
     private Database() {
         this.semaphoreSQLite = new Semaphore(1);
@@ -23,10 +30,10 @@ class Database {
         return NestedSingletonHelper.databaseSingleton;
     }
 
-
-    private static class NestedSingletonHelper{
+    private static class NestedSingletonHelper {
         public static Database databaseSingleton = new Database();
     }
+
 
     // alle SQL Methoden sind von ChatGPT
     private void createDatabaseIfNotExists() {
@@ -58,18 +65,34 @@ class Database {
         }
     }
 
+    public List<String> getUsersInGroup(String group) {
+        List<String> usersInGroup = new ArrayList<>();
 
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+                String query = "SELECT users.username FROM users " +
+                        "JOIN user_groups ON users.id = user_groups.user_id " +
+                        "JOIN groups ON user_groups.group_id = groups.id " +
+                        "WHERE groups.group_name = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, group);
 
-
-
-    // speichert Benutzername und Passwort
-    final Map<String, String> userAndPassword = Collections.synchronizedMap(new HashMap<String, String>());
-
-    // groupAndThread: Speichert ClientHandler nach den Gruppen ab, in denen der dazugehörige User ist
-    final Map<String, HashSet<ClientHandler>> groupAndThread = Collections.synchronizedMap(new HashMap<String, HashSet<ClientHandler>>());
-
-    final Map<String, ArrayList<Message>> messages = Collections.synchronizedMap(new HashMap<String, ArrayList<Message>>());
-
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            String username = resultSet.getString("username");
+                            usersInGroup.add(username);
+                        }
+                    }
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+        return usersInGroup;
+    }
 
     public List<String> getGroupsForUser(String username) {
         List<String> userGroups = new ArrayList<>();
@@ -103,6 +126,30 @@ class Database {
         return userGroups;
     }
 
+    public List<String> getAllUsers() {
+        List<String> allUsers = new ArrayList<>();
+
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+                String query = "SELECT username FROM users";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+                     ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String username = resultSet.getString("username");
+                        allUsers.add(username);
+                    }
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+
+        return allUsers;
+    }
+
 
     void removeThreadFromAllGroups(ClientHandler thread) {
         synchronized (groupAndThread) {
@@ -125,29 +172,33 @@ class Database {
         return allClientHandlers;
     }
 
-
+    @Deprecated
     // Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
     String getPasswordForUser(String username) {
         return userAndPassword.get(username);
     }
 
+    @Deprecated
     void setPasswordForUser(String password, String username) {
         userAndPassword.computeIfPresent(username, (k, v) -> password);
     }
 
+    @Deprecated
     void setUserAndPassword(String username, String password) {
         userAndPassword.put(username, password);
     }
 
+    @Deprecated
     boolean isRegistriert(String username) {
         return userAndPassword.containsKey(username);
     }
 
+    @Deprecated
     Set<String> getUserSet() {
         return userAndPassword.keySet();
     }
 
-    void addMessage (Message message) {
+    void addMessage(Message message) {
         String group = message.getStringAtIndex(0);
         messages.computeIfAbsent(group, k -> new ArrayList<>()).add(message);
     }
@@ -178,9 +229,10 @@ class Database {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-        semaphoreSQLite.release();
+            semaphoreSQLite.release();
         }
     }
+
     private int getUserIdByUsername(Connection connection, String username) throws SQLException {
         String query = "SELECT id FROM users WHERE username = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -312,8 +364,22 @@ class Database {
         return usernamesInGroup;
     }
 
-    public Collection<String> getAllNicknames() {
-        List<String> usersWithNicknames = new ArrayList<>();
+    public ArrayList<String> getNicknamesAsList() {
+        ArrayList<String> nicknamesAsList = new ArrayList<>();
+        HashMap<String, String> nicknamesAsMap = getNicknamesAsMap();
+
+        if (nicknamesAsMap != null) {
+            nicknamesAsMap.forEach((username, nickname) -> {
+                nicknamesAsList.add(username);
+                nicknamesAsList.add(nickname);
+            });
+        }
+        return nicknamesAsList;
+    }
+
+
+    public HashMap<String, String> getNicknamesAsMap() {
+        HashMap<String, String> usersWithNicknames = new HashMap<>();
 
         try {
             semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
@@ -321,12 +387,13 @@ class Database {
                 String query = "SELECT username, nickname FROM users";
                 try (PreparedStatement preparedStatement = connection.prepareStatement(query);
                      ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String username = resultSet.getString("username");
-                        String nickname = resultSet.getString("nickname");
-                        if (nickname!=null){
-                            usersWithNicknames.add(username);
-                            usersWithNicknames.add(nickname);
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            String username = resultSet.getString("username");
+                            String nickname = resultSet.getString("nickname");
+                            if (nickname!=null){
+                                usersWithNicknames.put(username, nickname);
+                            }
                         }
                     }
                 }
@@ -336,10 +403,8 @@ class Database {
         } finally {
             semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
         }
-
         return usersWithNicknames;
     }
-
 
 
     void addUserAndThreadToGroup(ClientHandler thread, String user, String group) {

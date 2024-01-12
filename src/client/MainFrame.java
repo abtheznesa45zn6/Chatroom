@@ -31,6 +31,11 @@ public class MainFrame extends JFrame implements ValidityChecker {
         init();
     }
 
+    public MainFrame() throws HeadlessException {
+        this.client = null;
+        init();
+    }
+
     private JPanel mainPanel;
     private JPanel ebene1Links;
     private JPanel ebene1Rechts;
@@ -72,7 +77,7 @@ public class MainFrame extends JFrame implements ValidityChecker {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(w, h);
         setLocationRelativeTo(null);
-        mainPanel.setBackground(Color.WHITE);
+        setResizable(false);
         System.out.println(w);
         System.out.println(h);
 
@@ -89,27 +94,20 @@ public class MainFrame extends JFrame implements ValidityChecker {
                 });
 
         initMainFrameComponents();
-        // setLayout(null); // sets absolute positioning of components
         setVisible(true);
     }
 
     private void initMainFrameComponents() {
         ebene1Links.setPreferredSize(new Dimension(w/2, h));
         ebene1Rechts.setPreferredSize(new Dimension(w/2, h));
-        //ebene1Links.setBackground(Color.GREEN);
-        //ebene1Rechts.setBackground(Color.RED);
 
 
         ebene2LinksOben.setPreferredSize(new Dimension(w/2-k, h/8));
         ebene2LinksUnten.setPreferredSize(new Dimension(w/2-k, h/8*7-50));
-        //ebene2LinksOben.setBackground(Color.YELLOW);
-        //ebene2LinksUnten.setBackground(Color.BLUE);
         initLinks();
 
         ebene2RechtsOben.setPreferredSize(new Dimension(w/2-k, h/8));
         ebene2RechtsUnten.setPreferredSize(new Dimension(w/2-k, h/8*7-50));
-        //ebene2RechtsOben.setBackground(Color.YELLOW);
-        //ebene2RechtsUnten.setBackground(Color.BLUE);
         initRechts();
     }
 
@@ -326,7 +324,6 @@ public class MainFrame extends JFrame implements ValidityChecker {
         feedbackTextArea.append("\n"+feedbackLine);
         removeExcessLines(feedbackTextArea);
     }
-
     // von ChatGPT
     private static void removeExcessLines(JTextArea textArea) {
         int lineCount = textArea.getLineCount();
@@ -347,12 +344,14 @@ public class MainFrame extends JFrame implements ValidityChecker {
     }
 
     public void updateNicknameList(HashMap<String, String> updatedMap) {
+        // update own nickname if changed
         String nullableNickname = updatedMap.get(client.getAngemeldeterNutzer());
         if (nullableNickname!=null && !(nullableNickname.equals(nicknameMap.get(client.getAngemeldeterNutzer())))){
             labelNickname.setText(nullableNickname);
             userBenachritigen("Nickname wurde geändert zu "+nullableNickname);
         }
 
+        // update nickname list
         nicknameMap = updatedMap;
     }
 }
