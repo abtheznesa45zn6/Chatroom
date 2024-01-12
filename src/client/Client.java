@@ -9,13 +9,13 @@ import java.util.*;
 class Client extends AbstractClass implements ValidityChecker {
     private Set<String> userList = new TreeSet<>();
     private String angemeldetesPasswort;
-    private final MainFrame clientGUI;
+    private final ClientGUI clientGUI;
     private final static Map<String, ArrayList<Message>> messages = new HashMap<String, ArrayList<Message>>();
 
     Client(Socket socket) {
         super(socket);
         // GUI starten und anzeigen
-        clientGUI = new MainFrame(this);
+        clientGUI = new ClientGUI(this);
     }
 
 

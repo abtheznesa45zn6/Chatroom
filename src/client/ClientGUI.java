@@ -15,10 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 
-public class MainFrame extends JFrame implements ValidityChecker {
+public class ClientGUI extends JFrame implements ValidityChecker {
 
     Client client;
 
@@ -26,12 +25,12 @@ public class MainFrame extends JFrame implements ValidityChecker {
 
     private HashMap<String, String> nicknameMap = new HashMap<>();
 
-    public MainFrame(Client client) throws HeadlessException {
+    public ClientGUI(Client client) throws HeadlessException {
         this.client = client;
         init();
     }
 
-    public MainFrame() throws HeadlessException {
+    public ClientGUI() throws HeadlessException {
         this.client = null;
         init();
     }
@@ -142,14 +141,14 @@ public class MainFrame extends JFrame implements ValidityChecker {
         anmeldenButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                anmeldenOderRegistrieren(MainFrame.this::anmelden);
+                anmeldenOderRegistrieren(ClientGUI.this::anmelden);
             }
         });
 
         registrierenButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                anmeldenOderRegistrieren(MainFrame.this::registrieren);
+                anmeldenOderRegistrieren(ClientGUI.this::registrieren);
             }
         });
 

@@ -9,7 +9,8 @@ public class ServerMain {
         ConnectionListener server = new ConnectionListener();
         server.start();
 
-        ServerGUI serverGUI = new ServerGUI(server);
+        ServerGUI serverGUI = ServerGUI.getInstance();
+        ServerGUI.server = server;
         serverGUI.init();
 
         try {

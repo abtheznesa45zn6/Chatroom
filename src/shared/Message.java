@@ -47,10 +47,7 @@ public class Message implements Serializable {
 
     @Override
     public String toString() {
-        return "Message{" +
-                "ServerBefehl=" + aktion +
-                ", stringArray=" + Arrays.toString(stringArray) +
-                '}';
+        return aktion + time.toString() + Arrays.toString(stringArray);
     }
 
     @Serial

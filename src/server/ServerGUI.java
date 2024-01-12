@@ -1,5 +1,6 @@
 package server;
 
+import shared.Message;
 import shared.ValidityChecker;
 
 import javax.swing.DefaultComboBoxModel;
@@ -24,17 +25,21 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ServerGUI extends JFrame implements ValidityChecker {
-    private ConnectionListener server;
 
+    public static ServerGUI getInstance() {
+        return ServerGUI.NestedSingletonHelper.serverGUISingleton;
+    }
+
+    private static class NestedSingletonHelper {
+        public static ServerGUI serverGUISingleton = new ServerGUI();
+    }
+
+    static ConnectionListener server;
     private int currentPanel;
     private String currentGroup;
 
     private String selectedItemInTabbedPanel;
     private final Database database = Database.getInstance();
-
-    public ServerGUI(ConnectionListener server) {
-        this.server = server;
-    }
 
     private ServerGUI() {
     }
@@ -228,5 +233,9 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     private void setSelectedItem(String selected) {
         selectedItem.setText(selected);
         selectedItemInTabbedPanel = selected;
+    }
+
+    void receiveMessage(Message message) {
+        serverlogAusgabe.append(message.toString()+"\n");
     }
 }

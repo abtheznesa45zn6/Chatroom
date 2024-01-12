@@ -14,6 +14,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         super(socket);
     }
     private final Database database = Database.getInstance();
+    private ServerGUI serverGUI = ServerGUI.getInstance();
 
     @Override
     protected void dingeTun() {
@@ -24,6 +25,8 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
     protected void ausführenVon(Message message) {
         if (message == null) {return;}
+
+        serverGUI.receiveMessage(message);
 
         switch (message.getAktion()) {
             case REGISTRIEREN -> registrieren(message);
