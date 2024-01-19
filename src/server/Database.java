@@ -244,7 +244,15 @@ class Database {
 
     void addMessage(Message message) {
         String group = message.getStringAtIndex(0);
+
+        // temporary storage
         messages.computeIfAbsent(group, k -> new ArrayList<>()).add(message);
+
+        addMessageToSQLite(message);
+    }
+
+    private void addMessageToSQLite(Message message) {
+
     }
 
     private void addThreadToGroup(ClientHandler clientHandler, String group) {

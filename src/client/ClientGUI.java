@@ -263,7 +263,8 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     private void anmeldenOderRegistrieren(BiConsumer<String, String> biConsumer) {
         String benutzer = benutzernameTextField.getText();
-        String password = Arrays.toString(passwordTextField.getPassword());
+        //String password = Arrays.toString(passwordTextField.getPassword());
+        String password = passwordTextField.getText();
 
         if (!checkValidityOfName(benutzer)) {
             userBenachritigen("Benutzername ungültig");
@@ -353,7 +354,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         String group = message.getStringAtIndex(0);
         String picture = message.getStringAtIndex(1);
 
-        String path = "messages" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".jpg";
+        String path = "messages/" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".jpg";
         writeFileFromString(Paths.get(path),picture);
 
         if (isCurrentGroup(group)) {
@@ -366,11 +367,15 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         String group = message.getStringAtIndex(0);
         String pdf = message.getStringAtIndex(1);
 
-        String path = "messages" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".pdf";
-        writeFileFromString(Paths.get(path),pdf);
+        String path = "messages/" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".pdf";
 
-        if (isCurrentGroup(group)) {
-            var abc = new DesktopOpenFile(path);
+        // only write and open new messages
+        if (!Files.exists(Paths.get(path))) {
+            writeFileFromString(Paths.get(path),pdf);
+
+            if (isCurrentGroup(group)) {
+                var abc = new DesktopOpenFile(path);
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 package shared;
 
+import server.Logger;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,6 +24,7 @@ public abstract class AbstractClass extends Thread {
 
     @Override
     public void run() {
+        Logger.logVerbindungsaufbau(socket);
         establishStreamsAndRun();
     }
 
@@ -34,6 +37,8 @@ public abstract class AbstractClass extends Thread {
 
         } catch (IOException ignored) {
         } finally {
+            Logger.logVerbindungstrennung(socket, angemeldeterNutzer);
+
             // Nötig, um den Socket von ClientHandler zu schließen
             try {
                 System.out.println("Socket is " + (this.socket.isClosed() ? "closed" : "not closed"));
@@ -95,6 +100,7 @@ public abstract class AbstractClass extends Thread {
     protected void sendMessage(ServerBefehl aktion, String... strings) {
         try {
             Message message = new Message(aktion, strings);
+            Logger.log(message);
             out.writeObject(message);
         } catch (IOException e) {
             e.printStackTrace();
@@ -103,6 +109,7 @@ public abstract class AbstractClass extends Thread {
 
     public void sendMessage(Message message) {
         try {
+            Logger.log(message);
             out.writeObject(message);
         } catch (IOException e) {
             e.printStackTrace();

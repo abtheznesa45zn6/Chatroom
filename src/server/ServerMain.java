@@ -4,10 +4,11 @@ import java.util.Scanner;
 
 public class ServerMain {
     public static void main(String[] args) {
-        System.out.println("Server gestartet");
+        System.out.println(ServerMain.class.getClassLoader().getResource("/logback.xml"));
 
         ConnectionListener server = new ConnectionListener();
         server.start();
+        Logger.logServer("Server gestartet");
 
         ServerGUI serverGUI = ServerGUI.getInstance();
         ServerGUI.server = server;
@@ -19,7 +20,7 @@ public class ServerMain {
             server.interrupt();
         }
 
-        System.out.println("Server beendet");
+        Logger.logServer("Server beendet");
     }
 
     private static void listenForServerCommands(ConnectionListener server) {

@@ -251,6 +251,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
 
             if (database.addUserToGroup(currentUser, currentGroup)) {
                 feedbackLabel.setText("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
+                Logger.logVerwaltung("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
             }
             else {
                 feedbackLabel.setText("Das Hinzufügen ist fehlgeschlagen.");
@@ -264,6 +265,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void servernameSetzen(String newName) {
+        Logger.logVerwaltung("Servername setzen auf "+newName);
         database.setServerName(newName);
         Message message = new Message(ServerBefehl.SERVERNAME_SETZEN, new String[]{newName});
         sendMessageToAllClients(message);
@@ -271,6 +273,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void bannen(String user) {
+        Logger.logVerwaltung("Benutzer "+user+" bannen");
         Message message = new Message(ServerBefehl.BANNEN, new String[]{user});
         sendMessageToAllClients(message);
 
@@ -285,6 +288,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void kicken(String user) {
+        Logger.logVerwaltung("Benutzer "+user+" kicken");
         Message message = new Message(ServerBefehl.KICKEN, new String[]{user});
         sendMessageToAllClients(message);
         updateBenutzerPane();
@@ -301,6 +305,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void verwarnen(String user) {
+        Logger.logVerwaltung("Benutzer "+user+" verwarnen");
         Message message = new Message(ServerBefehl.VERWARNEN, new String[]{user});
         sendMessageToAllClients(message);
         updateBenutzerPane();
@@ -308,6 +313,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void raumLoeschen(String group) {
+        Logger.logVerwaltung("Raum "+group+" löschen");
         database.deleteGroup(group);
         Message message = new Message(ServerBefehl.RAUM_LOESCHEN, new String[]{group});
         sendMessageToAllClientsInGroup(message, group);
@@ -315,6 +321,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void raumnameAendern(String group, String newName) {
+        Logger.logVerwaltung("Raum "+group+" umbenennen in "+newName);
         database.changeNameOfGroup(group, newName);
         Message message = new Message(ServerBefehl.RAUMNAME_AENDERN, new String[]{group});
         sendMessageToAllClientsInGroup(message, group);
@@ -322,6 +329,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void raumErstellen(String group) {
+        Logger.logVerwaltung("Raum "+group+" erstellen");
         database.createGroup(group);
         Message message = new Message(ServerBefehl.RAUM_ERSTELLEN, new String[]{group});
         sendMessageToAllClientsInGroup(message, group);

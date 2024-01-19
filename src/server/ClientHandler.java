@@ -5,8 +5,6 @@ import shared.*;
 import java.net.Socket;
 import java.util.*;
 
-// https://hyperskill.org/learn/step/15639
-
 
 class ClientHandler extends AbstractClass implements ValidityChecker {
 
@@ -26,6 +24,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     protected void ausführenVon(Message message) {
         if (message == null) {return;}
 
+        Logger.log(message);
         serverGUI.receiveMessage(message);
 
         switch (message.getAktion()) {
@@ -50,7 +49,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String user = message.getStringAtIndex(0);
         String password = message.getStringAtIndex(1);
 
-        if (checkValidityOfName(user)) {
+        if (!checkValidityOfName(user)) {
             sendMessage(ServerBefehl.FEEDBACK, "Name nicht erlaubt");
         }
         if (database.isRegistriert(user)) {
