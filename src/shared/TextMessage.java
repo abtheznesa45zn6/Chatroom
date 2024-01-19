@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 
 public class TextMessage extends Message {
 
-    public TextMessage(ServerBefehl aktion, String group, LocalDateTime date, String user, String text) {
-        super(aktion, new String[]{group, user, text});
+    public TextMessage(ServerBefehl aktion, String[] stringArray) {
+        super(aktion, stringArray);
     }
 
     public String getGroup() {

@@ -33,6 +33,8 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case ANMELDEN -> anmelden(message);
             case ABMELDEN -> abmelden();
             case TEXT_MESSAGE -> receiveTextMessage(message);
+            case PDF_MESSAGE -> receivePDFMessage(message);
+            case PICTURE_MESSAGE -> receivePictureMessage(message);
             case GET_MESSAGES_FROM -> getMessagesFrom(message);
             case SET_PASSWORD -> changePassword(message);
             case GET_GROUPS -> sendGroups(message);
@@ -42,7 +44,6 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
-
 
 
     private void registrieren(Message message) {
@@ -66,6 +67,12 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String user = message.getStringAtIndex(0);
         String password = message.getStringAtIndex(1);
 
+        if (database.isBanned(user)) {
+            sendMessage(ServerBefehl.FEEDBACK, "Benutzer ist gebannt");
+            return;
+        }
+        else
+
         if (database.isRegistriert(user)) {
             if (database.getPasswordForUser(user).equals(password)) {
 
@@ -78,12 +85,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
                 database.addUserAndThreadToGroup(this, user, "global");
                 sendGroups(message);
                 sendAllNicknames();
-
-                // Test
-                database.addGroup("Testgruppe");
-                database.addGroup("Off Topic");
-                database.addUserAndThreadToGroup(this, user,"Off Topic");
-                database.addUserAndThreadToGroup(this, user,"Testgruppe");
+                sendServername();
 
                 angemeldet = true;
                 angemeldeterNutzer = user;
@@ -100,10 +102,13 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
     }
 
+
+
     private void abmelden() {
         angemeldet = false;
         database.removeThreadFromAllGroups(this);
     }
+
 
 
     private void receiveTextMessage(Message message) {
@@ -114,21 +119,39 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         if (!this.angemeldeterNutzer.equals(angemeldeterNutzer)) {return;}
 
         if (database.currentUserIsInGroup(angemeldeterNutzer, group)) {
-            Message messageToSend = new Message(ServerBefehl.TEXT_MESSAGE, new String[] {group, angemeldeterNutzer, text});
+            TextMessage messageToSend = new TextMessage(ServerBefehl.TEXT_MESSAGE, new String[] {group, angemeldeterNutzer, text});
             database.addMessage(messageToSend);
-            sendTextMessageToAllClientsInGroup(messageToSend);
+            sendMessageToAllClientsInGroup(messageToSend);
         }
         else {
             sendMessage(ServerBefehl.FEEDBACK, angemeldeterNutzer + " nicht in Gruppe " + group);
         }
     }
 
-    private void sendTextMessageToAllClientsInGroup(Message message) {
+    private void receivePDFMessage(Message message) {
+        receiveDataMessage(message);
+    }
+
+    private void receivePictureMessage(Message message) {
+        receiveDataMessage(message);
+    }
+
+    private void receiveDataMessage(Message message) {
+        /*
+        String group = message.getStringAtIndex(0);
+        String angemeldeterNutzer = message.getStringAtIndex(1);
+        String data = message.getStringAtIndex(2);
+         */
+        database.addMessage(message);
+        sendMessageToAllClientsInGroup(message);
+    }
+
+    private void sendMessageToAllClientsInGroup(Message message) {
         String group = message.getStringAtIndex(0);
 
         HashSet<ClientHandler> users = database.getThreadsOfGroup(group);
         for (ClientHandler serverThread : users) {
-            serverThread.sendTextMessageToClient(message);
+            serverThread.sendMessageToClient(message);
         }
     }
 
@@ -139,7 +162,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         }
     }
 
-    private void sendTextMessageToClient (Message message) {
+    private void sendMessageToClient(Message message) {
         sendMessage(message);
     }
 
@@ -199,7 +222,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         if (user.equals(angemeldeterNutzer)) {
             if (database.setNicknameForUser(nickname, user)){
                 Message messageToSend = new Message(ServerBefehl.SET_NICKNAME, new String[]{user, nickname});
-                sendTextMessageToClient(messageToSend);
+                sendMessageToClient(messageToSend);
                 System.out.printf("Nickname von Nutzer %s wurde zu %s ist geändert.\n", angemeldeterNutzer, nickname);
             }
         }
@@ -210,6 +233,16 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         ArrayList<String> users = new ArrayList<>(database.getNicknamesAsList());
 
         sendMessage(ServerBefehl.RECEIVE_NICKNAME_LIST, users.toArray(new String[0]));
+    }
+
+    private void sendServername() {
+        sendMessage(ServerBefehl.SERVERNAME_SETZEN, database.getServerName());
+    }
+
+    public void verbindungTrennenWennUserEquals(String user) {
+        if (angemeldeterNutzer.equals(user)) {
+            this.beenden(this);
+        }
     }
 }
 

@@ -22,6 +22,9 @@ public class Message implements Serializable {
         this.aktion = aktion;
         this.stringArray = stringArray;
         this.time = LocalDateTime.now();
+        //this.group
+        //this.userID
+        //this.type enum
     }
 
     public ServerBefehl getAktion() {
@@ -81,5 +84,13 @@ public class Message implements Serializable {
     private void readObjectNoData()
     {
         System.out.println("readObjectNoData()");
+    }
+
+    public void setStringAtIndex(int index, String newValue) {
+        if (index >= 0 && index < stringArray.length) {
+            stringArray[index] = newValue;
+        } else {
+            throw new IndexOutOfBoundsException("Index out of bounds");
+        }
     }
 }

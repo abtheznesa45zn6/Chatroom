@@ -101,7 +101,7 @@ public abstract class AbstractClass extends Thread {
         }
     }
 
-    protected void sendMessage(Message message) {
+    public void sendMessage(Message message) {
         try {
             out.writeObject(message);
         } catch (IOException e) {

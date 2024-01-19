@@ -1,27 +1,19 @@
 package server;
 
-import shared.Message;
-import shared.ValidityChecker;
+import shared.*;
 
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionListener;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class ServerGUI extends JFrame implements ValidityChecker {
@@ -35,8 +27,38 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     static ConnectionListener server;
-    private int currentPanel;
+    private Pane currentPane;
     private String currentGroup;
+    private String currentUser;
+    private Aufgabe currentAufgabe;
+
+    private enum Pane {
+        BENUTZER,
+        RÄUME,
+        SERVER
+    }
+
+    private enum Aufgabe {
+        RAUM_ERSTELLEN("Raum erstellen"),
+        RAUMNAME_AENDERN("Raumname ändern"),
+        RAUM_LOESCHEN("Raum löschen"),
+        VERWARNEN("Verwarnen"),
+        KICKEN("Kicken"),
+        BANNEN("Bannen"),
+        SERVERNAME_SETZEN("Servername setzen");
+
+        private final String displayName;
+
+        Aufgabe(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
 
     private String selectedItemInTabbedPanel;
     private final Database database = Database.getInstance();
@@ -64,6 +86,14 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     private JLabel selectedItem;
     private JLabel feedbackLabel;
     private JList<String> serverListAlleBenutzer;
+    private JList<String> serverList;
+    private JButton zumRaumHinzufügenButton;
+    private JLabel selectedUserLabel;
+    private JLabel selectedGroupLabel;
+
+    private DefaultComboBoxModel<String> räumeComboBoxModel;
+    private DefaultComboBoxModel<String> benutzerComboBoxModel;
+    private DefaultComboBoxModel<String> serverComboBoxModel;
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -113,53 +143,67 @@ public class ServerGUI extends JFrame implements ValidityChecker {
 
     private void initRäumeUndBenutzerTabbedPane() {
 
-        updateRäume();
-        updateAlleBenutzerInServer();
-
         tabbedPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                int newPanel = tabbedPane.getSelectedIndex();
+                Pane newPane = getSelectedPane(tabbedPane);
 
-                if (currentPanel != tabbedPane.getSelectedIndex()) {
-                    switch (newPanel) {
-                        case 0 -> updateBenutzer(currentGroup);
-                        case 1 -> updateRäume();
-                        case 2 -> updateAlleBenutzerInServer();
+                if (currentPane != newPane) {
+                    switch (newPane) {
+                        case Pane.BENUTZER -> updateBenutzerPane();
+                        case Pane.RÄUME -> updateRäumePane();
+                        case Pane.SERVER -> updateServerPane();
                         default -> throw new IllegalStateException();
                     };
                 }
-                currentPanel = newPanel;
+                currentPane = newPane;
             }
         });
 
-
         // ComboBoxes, one per tab
-        DefaultComboBoxModel<String> räumeComboBoxModel = new DefaultComboBoxModel<>();
-        String[] räumeAufgaben = { "Raum erstellen", "Raumname ändern", "Raum löschen"};
-        for (String aufgaben : räumeAufgaben) {
-            räumeComboBoxModel.addElement(aufgaben);
+        räumeComboBoxModel = new DefaultComboBoxModel<>();
+        Aufgabe[] räumeAufgaben = { Aufgabe.RAUM_ERSTELLEN, Aufgabe.RAUMNAME_AENDERN, Aufgabe.RAUM_LOESCHEN};
+        for (Aufgabe aufgabe : räumeAufgaben) {
+            räumeComboBoxModel.addElement(aufgabe.toString());
         }
 
-        DefaultComboBoxModel<String> benutzerComboBoxModel = new DefaultComboBoxModel<>();
-        String[] benutzerAufgaben = { "Verwarnen", "Kicken", "Bannen"};
-        for (String aufgaben : benutzerAufgaben) {
-            benutzerComboBoxModel.addElement(aufgaben);
+        benutzerComboBoxModel = new DefaultComboBoxModel<>();
+        Aufgabe[] benutzerAufgaben = { Aufgabe.VERWARNEN, Aufgabe.KICKEN, Aufgabe.BANNEN };
+        for (Aufgabe aufgabe : benutzerAufgaben) {
+            benutzerComboBoxModel.addElement(aufgabe.toString());
         }
 
-        DefaultComboBoxModel<String> serverComboBoxModel = new DefaultComboBoxModel<>();
-        String[] serverAufgaben = { "Servername setzen", "Verwarnen", "Kicken", "Bannen"};
-        for (String aufgaben : serverAufgaben) {
-            serverComboBoxModel.addElement(aufgaben);
+        serverComboBoxModel = new DefaultComboBoxModel<>();
+        Aufgabe[] serverAufgaben = { Aufgabe.SERVERNAME_SETZEN };
+        for (Aufgabe aufgabe : serverAufgaben) {
+            serverComboBoxModel.addElement(aufgabe.toString());
         }
 
-        // initiale Einstellung
-        aufgabenComboBox.setModel(räumeComboBoxModel);
+        aufgabenComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Aufgabe aufgabe = stringToAufgabe(aufgabenComboBox.getSelectedItem());
+                currentAufgabe = aufgabe;
+                System.out.println("Selected Value: " + aufgabe);
+            }
+
+            private Aufgabe stringToAufgabe(Object selectedItem) {
+                for (Aufgabe a : Aufgabe.values()) {
+                    if (selectedItem.toString().equals(a.toString()))
+                        return a;
+                }
+                throw new IllegalStateException();
+            }
+        });
 
         // list listeners
-        räumeList.addListSelectionListener(tabbedPaneListListener(räumeList, räumeComboBoxModel));
-        benutzerList.addListSelectionListener(tabbedPaneListListener(benutzerList, benutzerComboBoxModel));
-        serverListAlleBenutzer.addListSelectionListener(tabbedPaneListListener(serverListAlleBenutzer, serverComboBoxModel));
+        räumeList.addListSelectionListener(setAufgabenComboBoxListener(räumeList, räumeComboBoxModel));
+        benutzerList.addListSelectionListener(setAufgabenComboBoxListener(benutzerList, benutzerComboBoxModel));
+        serverListAlleBenutzer.addListSelectionListener(setAufgabenComboBoxListener(serverListAlleBenutzer, benutzerComboBoxModel));
+        serverList.addListSelectionListener(setAufgabenComboBoxListener(serverList, serverComboBoxModel));
+
+        benutzerList.addListSelectionListener(setCurrentUserListener(benutzerList));
+        serverListAlleBenutzer.addListSelectionListener(setCurrentUserListener(serverListAlleBenutzer));
 
         räumeList.addListSelectionListener(listSelectionEvent -> {
             if (!listSelectionEvent.getValueIsAdjusting()) {
@@ -169,14 +213,146 @@ public class ServerGUI extends JFrame implements ValidityChecker {
                     return;
                 }
                 else {
-                    String group = nullableGroup.toString();
-                    currentGroup = group;
+                    currentGroup = nullableGroup.toString();
+                    updateBenutzerList(currentGroup);
+                    selectedGroupLabel.setText(currentGroup);
                 }
             }
         });
+
+        // Button Listeners
+        okButton.addActionListener(buttonListener -> {
+            String userOrGroup = null;
+
+            if (currentAufgabe == Aufgabe.RAUM_ERSTELLEN || currentAufgabe == Aufgabe.RAUM_LOESCHEN || currentAufgabe == Aufgabe.SERVERNAME_SETZEN){
+                // userOrGroup ist nicht nötig, deswegen muss hier nicht returnt werden
+            } else if (selectedItemInTabbedPanel == null) {return;}
+            else {
+                userOrGroup = selectedItemInTabbedPanel.split(disallowedSpaceCharacter)[0];
+            }
+
+            String eingabe = aufgabenEingabe.getText();
+            aufgabenEingabe.setText("");
+
+            switch (currentAufgabe) {
+                case RAUM_ERSTELLEN -> raumErstellen(eingabe);
+                case RAUMNAME_AENDERN -> raumnameAendern(userOrGroup, eingabe);
+                case RAUM_LOESCHEN -> raumLoeschen(eingabe);
+                case VERWARNEN -> verwarnen(userOrGroup);
+                case KICKEN -> kicken(userOrGroup);
+                case BANNEN -> bannen(userOrGroup);
+                case SERVERNAME_SETZEN -> servernameSetzen(eingabe);
+                default -> throw new IllegalStateException();
+            }
+        });
+
+        zumRaumHinzufügenButton.addActionListener(buttonListener -> {
+            if (currentUser == null || currentGroup == null) {return;}
+
+            if (database.addUserToGroup(currentUser, currentGroup)) {
+                feedbackLabel.setText("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
+            }
+            else {
+                feedbackLabel.setText("Das Hinzufügen ist fehlgeschlagen.");
+            }
+        });
+
+        // initiale Einstellung
+        updateBenutzerPane();
+        aufgabenComboBox.setModel(benutzerComboBoxModel);
+        currentAufgabe = Aufgabe.SERVERNAME_SETZEN;
     }
 
-    private ListSelectionListener tabbedPaneListListener(JList<String> jList, DefaultComboBoxModel<String> comboBoxModel) {
+    private void servernameSetzen(String newName) {
+        database.setServerName(newName);
+        Message message = new Message(ServerBefehl.SERVERNAME_SETZEN, new String[]{newName});
+        sendMessageToAllClients(message);
+        updateServerPane();
+    }
+
+    private void bannen(String user) {
+        Message message = new Message(ServerBefehl.BANNEN, new String[]{user});
+        sendMessageToAllClients(message);
+
+        HashSet<ClientHandler> clients = database.getAllThreads();
+        for (ClientHandler client : clients) {
+            client.sendMessage(message);
+            client.verbindungTrennenWennUserEquals(user);
+        }
+
+        updateBenutzerPane();
+        updateRäumePane();
+    }
+
+    private void kicken(String user) {
+        Message message = new Message(ServerBefehl.KICKEN, new String[]{user});
+        sendMessageToAllClients(message);
+        updateBenutzerPane();
+        updateRäumePane();
+
+        HashSet<ClientHandler> clients = database.getAllThreads();
+        for (ClientHandler client : clients) {
+            client.sendMessage(message);
+            client.verbindungTrennenWennUserEquals(user);
+        }
+
+        updateBenutzerPane();
+        updateRäumePane();
+    }
+
+    private void verwarnen(String user) {
+        Message message = new Message(ServerBefehl.VERWARNEN, new String[]{user});
+        sendMessageToAllClients(message);
+        updateBenutzerPane();
+        updateRäumePane();
+    }
+
+    private void raumLoeschen(String group) {
+        database.deleteGroup(group);
+        Message message = new Message(ServerBefehl.RAUM_LOESCHEN, new String[]{group});
+        sendMessageToAllClientsInGroup(message, group);
+        updateRäume();
+    }
+
+    private void raumnameAendern(String group, String newName) {
+        database.changeNameOfGroup(group, newName);
+        Message message = new Message(ServerBefehl.RAUMNAME_AENDERN, new String[]{group});
+        sendMessageToAllClientsInGroup(message, group);
+        updateRäume();
+    }
+
+    private void raumErstellen(String group) {
+        database.createGroup(group);
+        Message message = new Message(ServerBefehl.RAUM_ERSTELLEN, new String[]{group});
+        sendMessageToAllClientsInGroup(message, group);
+        updateRäume();
+    }
+
+    private void sendMessageToAllClientsInGroup(Message message, String group) {
+        HashSet<ClientHandler> clients = database.getAllThreads();
+        for (ClientHandler client : clients) {
+            client.sendMessage(message);
+        }
+    }
+
+    private void sendMessageToAllClients(Message message) {
+        HashSet<ClientHandler> clients = database.getAllThreads();
+        for (ClientHandler client : clients) {
+            client.sendMessage(message);
+        }
+    }
+
+
+    private Pane getSelectedPane(JTabbedPane pane) {
+        return switch (pane.getSelectedIndex()) {
+            case 0 -> Pane.BENUTZER;
+            case 1 -> Pane.RÄUME;
+            case 2 -> Pane.SERVER;
+            default -> throw new IllegalStateException();
+        };
+    }
+
+    private ListSelectionListener setAufgabenComboBoxListener(JList<String> jList, DefaultComboBoxModel<String> comboBoxModel) {
         return listSelectionEvent -> {
             if (!listSelectionEvent.getValueIsAdjusting()) {
 
@@ -185,6 +361,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
                     return;
                 }
                 else {
+                    // delete this
                     setSelectedItem(nullableSelectedValue.toString());
                     aufgabenComboBox.setModel(comboBoxModel);
                 }
@@ -192,6 +369,30 @@ public class ServerGUI extends JFrame implements ValidityChecker {
         };
     }
 
+    private ListSelectionListener setCurrentUserListener(JList<String> jList) {
+        return listSelectionEvent -> {
+            if (!listSelectionEvent.getValueIsAdjusting()) {
+
+                Object nullableGroup = jList.getSelectedValue();
+                if (nullableGroup == null){
+                    return;
+                }
+                else {
+                    String user = nullableGroup.toString();
+                    currentUser = user.split(disallowedSpaceCharacter)[0];
+                    selectedUserLabel.setText(currentUser);
+                }
+            }
+        };
+    }
+
+
+    private void updateRäumePane() {
+        updateRäume();
+        updateBenutzerList(currentGroup);
+        selectedGroupLabel.setText(currentGroup);
+        selectedUserLabel.setText(currentUser);
+    }
 
     private void updateRäume() {
         List<String> groups = database.getAllGroups();
@@ -201,17 +402,25 @@ public class ServerGUI extends JFrame implements ValidityChecker {
             listModel.addElement(group);
         }
         räumeList.setModel(listModel);
+        aufgabenComboBox.setModel(räumeComboBoxModel);
     }
 
-    private void updateBenutzer(String group) {
+    private void updateBenutzerList(String group) {
         if (group == null) {return;}
         List<String> users = database.getUsersInGroup(group);
         setJListToUsers(benutzerList, users);
     }
 
-    private void updateAlleBenutzerInServer() {
+    private void updateBenutzerPane() {
         List<String> users = database.getAllUsers();
         setJListToUsers(serverListAlleBenutzer, users);
+    }
+
+    private void updateServerPane() {
+        String serverName = database.getServerName();
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        model.addElement(serverName);
+        serverList.setModel(model);
     }
 
     private void setJListToUsers(JList<String> jList, List<String> users) {
@@ -231,8 +440,9 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void setSelectedItem(String selected) {
-        selectedItem.setText(selected);
         selectedItemInTabbedPanel = selected;
+        selectedItem.setText(selected);
+        aufgabenEingabe.setText(selected);
     }
 
     void receiveMessage(Message message) {

@@ -28,10 +28,9 @@ class Client extends AbstractClass implements ValidityChecker {
             Client client = new Client(socket);
             client.start();
             client.join();
-
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
 
         } finally {
             System.out.println("Client main beendet");
@@ -41,18 +40,6 @@ class Client extends AbstractClass implements ValidityChecker {
 
     @Override
     public void dingeTun() {
-
-        // Test Block
-        try {
-            out.writeObject(new Message(ServerBefehl.REGISTRIEREN, new String[]{"ask", "asdfa"}));
-            out.writeObject(new Message(ServerBefehl.REGISTRIEREN, new String[]{"ask", "asd23424fa"}));
-            out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask234", "asd23424a"}));
-            out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask", "asdf2342423423523456a"}));
-            out.writeObject(new Message(ServerBefehl.ANMELDEN, new String[]{"ask", "asdfa"}));
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
         listenAndExecute();
 
@@ -67,14 +54,22 @@ class Client extends AbstractClass implements ValidityChecker {
             case ANMELDEN_ERFOLGREICH -> nutzerAnmelden(message);
             case FEEDBACK -> feedback(message);
             case TEXT_MESSAGE -> receiveTextMessage(message);
+            case PDF_MESSAGE -> receivePDFMessage(message);
+            case PICTURE_MESSAGE -> receivePictureMessage(message);
             case RECEIVE_GROUPS -> receiveGroups(message);
             case RECEIVE_USER_LIST -> receiveUserList(message);
             case SET_NICKNAME -> updateNicknames(message);
             case RECEIVE_NICKNAME_LIST -> receiveNicknameList(message);
+            case RAUM_ERSTELLEN -> erstelleRaum(message);
+            case RAUMNAME_AENDERN -> aendereRaumname(message);
+            case RAUM_LOESCHEN -> loescheRaum(message);
+            case VERWARNEN -> verwarnen(message);
+            case KICKEN -> kicken(message);
+            case BANNEN -> bannen(message);
+            case SERVERNAME_SETZEN -> setzeServername(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         };
     }
-
 
 
     //getNewMessagesFromGroupSinceTime(group, time)
@@ -86,7 +81,7 @@ class Client extends AbstractClass implements ValidityChecker {
     void anmelden(String user, String password) {
         sendMessage(ServerBefehl.ANMELDEN, user, password);
     }
-    void abmelden() {
+    void sendAbmeldenMessage() {
         sendMessage(ServerBefehl.ABMELDEN);
     }
 
@@ -140,8 +135,30 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
     private void receiveTextMessage(Message message) {
-        showMessageInGUI(message);
+
+        if (message instanceof TextMessage textMessage) {
+            clientGUI.showMessageInGUI(textMessage);
+        } else {
+            throw new IllegalStateException();
+        }
+
         //saveMessageToCache(message);
+    }
+
+    private void receivePictureMessage(Message message) {
+        if (message instanceof PictureMessage pictureMessage) {
+            clientGUI.showMessageInGUI(pictureMessage);
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    private void receivePDFMessage(Message message) {
+        if (message instanceof PDFMessage pdfMessage) {
+            clientGUI.showMessageInGUI(pdfMessage);
+        } else {
+            throw new IllegalStateException();
+        }
     }
 
     private void receiveGroups(Message message) {
@@ -175,6 +192,54 @@ class Client extends AbstractClass implements ValidityChecker {
         clientGUI.updateNicknameList(map);
     }
 
+    private void erstelleRaum(Message message) {
+        String groupName = message.getStringAtIndex(0);
+        clientGUI.addFeedback("Ein neuer Raum namens +"+groupName+" wurde erstellt.");
+        sendRequestForGroupList(angemeldeterNutzer);
+    }
+
+    private void aendereRaumname(Message message) {
+        String oldName = message.getStringAtIndex(0);
+        String newName = message.getStringAtIndex(1);
+        clientGUI.addFeedback("Der Raum namens +"+oldName+" wurde in"+newName+" umbenannt.");
+        sendRequestForGroupList(angemeldeterNutzer);
+    }
+
+    private void loescheRaum(Message message) {
+        String geloeschterRaum = message.getStringAtIndex(0);
+        clientGUI.addFeedback("Der Raum +"+geloeschterRaum+" wurde gelöscht.");
+        sendRequestForGroupList(angemeldeterNutzer);
+    }
+
+    private void verwarnen(Message message) {
+        String warnedUser = message.getStringAtIndex(0);
+        if (angemeldeterNutzer.equals(warnedUser)) {
+            clientGUI.addFeedback("Du wurdest verwarnt.");
+        }
+    }
+
+    private void kicken(Message message) {
+        String kickedUser = message.getStringAtIndex(0);
+        if (angemeldeterNutzer.equals(kickedUser)) {
+            clientGUI.addFeedback("Du wurdest vom Server gekickt.");
+        }
+        clientGUI.abmelden();
+    }
+
+    private void bannen(Message message) {
+        String bannedUser = message.getStringAtIndex(0);
+        if (angemeldeterNutzer.equals(bannedUser)) {
+            clientGUI.addFeedback("Du wurdest vom Server gebannt.");
+        }
+        clientGUI.abmelden();
+    }
+
+    private void setzeServername(Message message) {
+        String newName = message.getStringAtIndex(0);
+        clientGUI.setServerName(newName);
+    }
+
+
 
     private void saveMessageToCache(Message message) {
         String group = message.getStringAtIndex(0);
@@ -182,9 +247,7 @@ class Client extends AbstractClass implements ValidityChecker {
         groupMessages.add(message);
     }
 
-    private void showMessageInGUI(Message message) {
-        clientGUI.showMessageInGUIIfCurrentGroup(message);
-    }
+
 
     private void getAllMessagesFromRoom () {
 

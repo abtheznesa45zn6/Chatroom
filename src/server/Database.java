@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 class Database {
-    private SQLiteDataSource dataSource;
+    private final SQLiteDataSource dataSource;
     private final Semaphore semaphoreSQLite;
     // speichert Benutzername und Passwort
 
@@ -30,6 +30,8 @@ class Database {
         return NestedSingletonHelper.databaseSingleton;
     }
 
+
+
     private static class NestedSingletonHelper {
         public static Database databaseSingleton = new Database();
     }
@@ -39,11 +41,25 @@ class Database {
     private void createDatabaseIfNotExists() {
         try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
              Statement statement = connection.createStatement()) {
+            // Create Server table
+            String createServerTableQuery = "CREATE TABLE IF NOT EXISTS server (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "server_name TEXT UNIQUE);";
+            statement.executeUpdate(createServerTableQuery);
+
+            // Insert a default server name or check if an entry exists and insert if not
+            String insertDefaultServerQuery = "INSERT OR IGNORE INTO server (server_name) VALUES (?)";
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertDefaultServerQuery)) {
+                insertStatement.setString(1, "DefaultServerName"); // Set your default server name here
+                insertStatement.executeUpdate();
+            }
+
             // Create users table
             String createUserTableQuery = "CREATE TABLE IF NOT EXISTS users (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "username TEXT UNIQUE," +
-                    "nickname TEXT);";
+                    "nickname TEXT," +
+                    "IS_BANNED INTEGER DEFAULT 0);"; // Adding IS_BANNED attribute with default value 0 (false)
             statement.executeUpdate(createUserTableQuery);
 
             // Create groups table
@@ -57,13 +73,15 @@ class Database {
                     "user_id INTEGER," +
                     "group_id INTEGER," +
                     "PRIMARY KEY (user_id, group_id)," +
-                    "FOREIGN KEY (user_id) REFERENCES users(id)," +
-                    "FOREIGN KEY (group_id) REFERENCES groups(id));";
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE," +
+                    "FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE);";
             statement.executeUpdate(createUserGroupsTableQuery);
         } catch (SQLException e) {
             e.printStackTrace(); // Handle the exception according to your needs
         }
     }
+
+
 
     public List<String> getUsersInGroup(String group) {
         List<String> usersInGroup = new ArrayList<>();
@@ -150,6 +168,30 @@ class Database {
         return allUsers;
     }
 
+    public boolean isBanned(String username) {
+        boolean isBanned = false;
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement statement = connection.prepareStatement("SELECT IS_BANNED FROM users WHERE username = ?");
+            ) {
+                statement.setString(1, username);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        // Retrieve the IS_BANNED value (assuming it's stored as 0 for false and 1 for true)
+                        isBanned = resultSet.getInt("IS_BANNED") == 1;
+                    }
+                }
+            }
+            } catch (InterruptedException | SQLException e) {
+                e.printStackTrace();
+            return true; // im Falle eines Errors lieber nicht zulassen
+            } finally {
+                semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+            }
+            return isBanned;
+        }
+
 
     void removeThreadFromAllGroups(ClientHandler thread) {
         synchronized (groupAndThread) {
@@ -171,6 +213,8 @@ class Database {
         }
         return allClientHandlers;
     }
+
+
 
     @Deprecated
     // Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
@@ -208,11 +252,11 @@ class Database {
     }
 
     // ChatGPT
-    private void addUserToGroup(String user, String group) {
+    public boolean addUserToGroup(String user, String group) {
         try {
             semaphoreSQLite.acquire();
         } catch (InterruptedException e) {
-            return;
+            return false;
         }
         try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
             // Get user and group IDs
@@ -226,11 +270,13 @@ class Database {
                 preparedStatement.setInt(2, groupId);
                 preparedStatement.executeUpdate();
             }
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             semaphoreSQLite.release();
         }
+        return false;
     }
 
     private int getUserIdByUsername(Connection connection, String username) throws SQLException {
@@ -501,6 +547,133 @@ class Database {
         }
 
         return allGroups;
+    }
+
+    public String getServerName() {
+        String serverName = null;
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement preparedStatement = connection.prepareStatement("SELECT server_name FROM server WHERE id = 1")) {
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        serverName = resultSet.getString("server_name");
+                    }
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+        return serverName;
+    }
+
+    public void setServerName(String newName) {
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement preparedStatement = connection.prepareStatement("UPDATE server SET server_name = ? WHERE id = 1")) {
+
+                // Set the parameter for the prepared statement
+                preparedStatement.setString(1, newName);
+
+                // Execute the update
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                // Check if the update was successful
+                if (rowsAffected > 0) {
+                    System.out.println("Server name updated successfully to '" + newName + "'.");
+                } else {
+                    System.out.println("Failed to update server name.");
+                }
+
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle the exception according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+    }
+
+    public void deleteGroup(String groupName) {
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM groups WHERE group_name = ?")) {
+
+                // Set the parameter for the prepared statement
+                preparedStatement.setString(1, groupName);
+
+                // Execute the update
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                // Check if the deletion was successful
+                if (rowsAffected > 0) {
+                    System.out.println("Group '" + groupName + "' deleted successfully.");
+                } else {
+                    System.out.println("Group '" + groupName + "' not found or deletion failed.");
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+    }
+
+    public void changeNameOfGroup(String group, String newName) {
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement preparedStatement = connection.prepareStatement("UPDATE groups SET group_name = ? WHERE group_name = ?")) {
+
+                // Set the parameters for the prepared statement
+                preparedStatement.setString(1, newName);
+                preparedStatement.setString(2, group);
+
+                // Execute the update
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                // Check if the update was successful
+                if (rowsAffected > 0) {
+                    System.out.println("Group name changed from '" + group + "' to '" + newName + "' successfully.");
+                } else {
+                    System.out.println("Group '" + group + "' not found or update failed.");
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
+    }
+
+    public void createGroup(String groupName) {
+        try {
+            semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
+                 PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO groups (group_name) VALUES (?)")) {
+
+                // Set the parameter for the prepared statement
+                preparedStatement.setString(1, groupName);
+
+                // Execute the insert
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                // Check if the insertion was successful
+                if (rowsAffected > 0) {
+                    System.out.println("Group '" + groupName + "' created successfully.");
+                } else {
+                    System.out.println("Group creation failed.");
+                }
+            }
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace(); // Handle exceptions according to your needs
+        } finally {
+            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+        }
     }
 }
 

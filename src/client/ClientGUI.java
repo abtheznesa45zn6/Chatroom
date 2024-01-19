@@ -1,7 +1,6 @@
 package client;
 
-import shared.Message;
-import shared.ValidityChecker;
+import shared.*;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -10,10 +9,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 
@@ -65,6 +70,8 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JPanel cardObenRechts;
     private JButton abmeldenButton;
     private JList listBenutzer;
+    private JLabel verbindungLabel;
+    private JLabel statusLabel;
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -86,7 +93,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
                 new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        client.abmelden();
+                        client.sendAbmeldenMessage();
                         client.beenden(client);
                         dispose();
                     }
@@ -97,9 +104,9 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     private void initMainFrameComponents() {
+        addMenu();
         ebene1Links.setPreferredSize(new Dimension(w/2, h));
         ebene1Rechts.setPreferredSize(new Dimension(w/2, h));
-
 
         ebene2LinksOben.setPreferredSize(new Dimension(w/2-k, h/8));
         ebene2LinksUnten.setPreferredSize(new Dimension(w/2-k, h/8*7-50));
@@ -110,7 +117,46 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         initRechts();
     }
 
+    private void addMenu() {
+        JMenuBar menuBar = new JMenuBar();
+        setJMenuBar(menuBar);
+
+        JMenu menu = new JMenu("Menu");
+        JMenu benutzer = new JMenu("Benutzer");
+        JMenu raum = new JMenu("Raum");
+        JMenu optionen = new JMenu("Optionen");
+        JMenu senden = new JMenu("Senden");
+        menuBar.add(menu);
+        menuBar.add(benutzer);
+        menuBar.add(raum);
+        menuBar.add(optionen);
+
+
+        JMenuItem sendenJPG = new JMenuItem("JPG");
+        senden.add(sendenJPG);
+        JMenuItem sendenPDF = new JMenuItem("PDF");
+        senden.add(sendenPDF);
+        menuBar.add(senden);
+
+        sendenJPG.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                FileSenderGUI sendJPGDialog = new FileSenderGUI(client, currentGroup, true);
+            }
+        });
+
+        sendenPDF.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                FileSenderGUI sendPDFBildDialog = new FileSenderGUI(client, currentGroup,false);
+            }
+        });
+
+
+
+    }
+
     private void initLinks() {
+
+        resetStatus();
 
         int rows = 15;
         int columns = 40;
@@ -128,7 +174,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
 
     private void initRechts() {
-
         //setNicknameTextField.setPreferredSize(new Dimension(w/10, h/26));
 
 
@@ -189,7 +234,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         abmeldenButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                client.abmelden();
+                client.sendAbmeldenMessage();
                 card2.setVisible(false);
                 card1.setVisible(true);
             }
@@ -252,7 +297,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         addFeedback(feedback);
     }
 
-    private void addOneMessageToCurrentChat(Message message) {
+    private void addTextMessageToCurrentChat(Message message) {
         String user = message.getStringAtIndex(1);
         String text = message.getStringAtIndex(2);
         LocalDateTime time = message.getTime();
@@ -282,16 +327,80 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         }
     }
 
+    void resetStatus(){
+        statusLabel.setText("zu keinem Server verbunden.");
+        verbindungLabel.setText("nicht angemeldet.");
+    }
+
 
     // API für Client
 
-    void showMessageInGUIIfCurrentGroup(Message message) {
+    void abmelden() {
+        resetStatus();
+        card2.setVisible(false);
+        card1.setVisible(true);
+    }
+
+    void showMessageInGUI(TextMessage message) {
         String group = message.getStringAtIndex(0);
 
-        if (currentGroup.equals(group)) {
-            addOneMessageToCurrentChat(message);
+        if (isCurrentGroup(group)) {
+            addTextMessageToCurrentChat(message);
         }
     }
+
+    void showMessageInGUI(PictureMessage message) {
+        String group = message.getStringAtIndex(0);
+        String picture = message.getStringAtIndex(1);
+
+        String path = "messages" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".jpg";
+        writeFileFromString(Paths.get(path),picture);
+
+        if (isCurrentGroup(group)) {
+            var abc = new DesktopOpenFile(path);
+        }
+        System.out.println(Paths.get(path).getFileName());
+    }
+
+    void showMessageInGUI(PDFMessage message) {
+        String group = message.getStringAtIndex(0);
+        String pdf = message.getStringAtIndex(1);
+
+        String path = "messages" + group + "/" + message.getTime().toInstant(ZoneOffset.UTC).getEpochSecond() + ".pdf";
+        writeFileFromString(Paths.get(path),pdf);
+
+        if (isCurrentGroup(group)) {
+            var abc = new DesktopOpenFile(path);
+        }
+    }
+
+    private static void writeFileFromString(Path outputPath, String data) {
+
+        byte[] decodedBytes = Base64.getDecoder().decode(data);
+
+        // Create parent directories if they don't exist
+        try {
+            Files.createDirectories(outputPath.getParent());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return; // Stop execution if directory creation fails
+        }
+
+        // Write the file
+        try {
+            Files.write(outputPath, decodedBytes);
+            System.out.println("File written successfully to: " + outputPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private boolean isCurrentGroup(String group) {
+        return currentGroup.equals(group);
+    }
+
 
     public void setNickname(String user) {
         labelNickname.setText(user);
@@ -352,5 +461,9 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
         // update nickname list
         nicknameMap = updatedMap;
+    }
+
+    public void setServerName(String newName) {
+        statusLabel.setText("verbunden mit Server "+newName+".");
     }
 }

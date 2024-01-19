@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="server.ServerGUI">
   <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="20" y="20" width="500" height="400"/>
+      <xy x="20" y="20" width="500" height="1243"/>
     </constraints>
     <properties>
       <enabled value="false"/>
@@ -54,32 +54,6 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="3af53" class="javax.swing.JList" binding="benutzerList">
-                        <constraints border-constraint="Center"/>
-                        <properties/>
-                      </component>
-                    </children>
-                  </grid>
-                  <grid id="aa544" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints>
-                      <tabbedpane title="Räume"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="4a890" class="javax.swing.JList" binding="räumeList">
-                        <constraints border-constraint="Center"/>
-                        <properties/>
-                      </component>
-                    </children>
-                  </grid>
-                  <grid id="b57e4" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints>
-                      <tabbedpane title="Server"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
                       <grid id="e958b" layout-manager="BorderLayout" hgap="0" vgap="0">
                         <constraints border-constraint="Center"/>
                         <properties/>
@@ -104,13 +78,74 @@
                           </component>
                         </children>
                       </grid>
+                    </children>
+                  </grid>
+                  <grid id="aa544" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Räume"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="4e67a" layout-manager="BorderLayout" hgap="0" vgap="0">
+                        <constraints border-constraint="North"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <grid id="574ef" layout-manager="BorderLayout" hgap="0" vgap="0">
+                            <constraints border-constraint="West"/>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="4a890" class="javax.swing.JList" binding="räumeList">
+                                <constraints border-constraint="Center"/>
+                                <properties/>
+                              </component>
+                              <component id="4f487" class="javax.swing.JLabel">
+                                <constraints border-constraint="North"/>
+                                <properties>
+                                  <text value="Räume:"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </grid>
+                          <grid id="12ba" layout-manager="BorderLayout" hgap="0" vgap="0">
+                            <constraints border-constraint="Center"/>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="3af53" class="javax.swing.JList" binding="benutzerList">
+                                <constraints border-constraint="Center"/>
+                                <properties/>
+                              </component>
+                              <component id="89fcf" class="javax.swing.JLabel">
+                                <constraints border-constraint="North"/>
+                                <properties>
+                                  <text value="Benutzer im Raum:"/>
+                                  <verticalAlignment value="0"/>
+                                  <verticalTextPosition value="0"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </grid>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                  <grid id="b57e4" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Server"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
                       <grid id="b5fef" layout-manager="BorderLayout" hgap="0" vgap="0">
                         <constraints border-constraint="North"/>
                         <properties/>
                         <border type="none"/>
                         <children>
                           <component id="afbec" class="javax.swing.JLabel">
-                            <constraints border-constraint="Center"/>
+                            <constraints border-constraint="North"/>
                             <properties>
                               <horizontalAlignment value="2"/>
                               <horizontalTextPosition value="0"/>
@@ -118,6 +153,10 @@
                               <verticalAlignment value="0"/>
                               <verticalTextPosition value="0"/>
                             </properties>
+                          </component>
+                          <component id="6221b" class="javax.swing.JList" binding="serverList">
+                            <constraints border-constraint="Center"/>
+                            <properties/>
                           </component>
                         </children>
                       </grid>
@@ -179,6 +218,43 @@
                       <text value=""/>
                     </properties>
                   </component>
+                </children>
+              </grid>
+              <grid id="32806" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="South"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <grid id="65f1" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="110c6" class="javax.swing.JLabel" binding="selectedUserLabel">
+                        <constraints border-constraint="West"/>
+                        <properties>
+                          <horizontalAlignment value="2"/>
+                          <horizontalTextPosition value="0"/>
+                          <text value=""/>
+                        </properties>
+                      </component>
+                      <component id="7155e" class="javax.swing.JLabel" binding="selectedGroupLabel">
+                        <constraints border-constraint="Center"/>
+                        <properties>
+                          <horizontalAlignment value="0"/>
+                          <horizontalTextPosition value="0"/>
+                          <text value=""/>
+                        </properties>
+                      </component>
+                      <component id="74c7c" class="javax.swing.JButton" binding="zumRaumHinzufügenButton">
+                        <constraints border-constraint="East"/>
+                        <properties>
+                          <horizontalTextPosition value="0"/>
+                          <text value="zum Raum hinzufügen"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
                 </children>
               </grid>
             </children>
