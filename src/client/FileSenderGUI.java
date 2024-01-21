@@ -90,7 +90,7 @@ public class FileSenderGUI extends JFrame {
     private void sendFile(){
         File file = new File(fileNameTextField.getText());
         System.out.println(file.getTotalSpace());
-        if (file.exists() && file.getTotalSpace() < 1_000_000_000_000L) {
+        if (file.exists()) {
 
             byte[] bytes;
             try {

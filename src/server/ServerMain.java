@@ -4,8 +4,6 @@ import java.util.Scanner;
 
 public class ServerMain {
     public static void main(String[] args) {
-        System.out.println(ServerMain.class.getClassLoader().getResource("/logback.xml"));
-
         ConnectionListener server = new ConnectionListener();
         server.start();
         Logger.logServer("Server gestartet");

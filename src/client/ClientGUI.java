@@ -83,7 +83,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(w, h);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
         System.out.println(w);
         System.out.println(h);
 
@@ -104,16 +104,17 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     private void initMainFrameComponents() {
+        //card2.setVisible(false);
         addMenu();
         ebene1Links.setPreferredSize(new Dimension(w/2, h));
         ebene1Rechts.setPreferredSize(new Dimension(w/2, h));
 
-        ebene2LinksOben.setPreferredSize(new Dimension(w/2-k, h/8));
-        ebene2LinksUnten.setPreferredSize(new Dimension(w/2-k, h/8*7-50));
+        ebene2LinksOben.setPreferredSize(new Dimension(w/2-k, h/6));
+        ebene2LinksUnten.setPreferredSize(new Dimension(w/2-k, h/8*6-50));
         initLinks();
 
-        ebene2RechtsOben.setPreferredSize(new Dimension(w/2-k, h/8));
-        ebene2RechtsUnten.setPreferredSize(new Dimension(w/2-k, h/8*7-50));
+        ebene2RechtsOben.setPreferredSize(new Dimension(w/2-k, h/6));
+        ebene2RechtsUnten.setPreferredSize(new Dimension(w/2-k, h/8*6-50));
         initRechts();
     }
 
@@ -163,9 +164,9 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         chatAusgabe.setRows(rows);
         chatAusgabe.setColumns(columns);
 
-        chatAusgabeScrollPane.setPreferredSize(new Dimension((int)(w/2.2), h/8*5));
+        chatAusgabeScrollPane.setPreferredSize(new Dimension((int)(w/2.2), h/8*4));
 
-        chatEingabe.setPreferredSize(new Dimension((int)(w/2.3), h/20));
+        chatEingabe.setPreferredSize(new Dimension((int)(w/2), h/20));
 
 
         // Listeners

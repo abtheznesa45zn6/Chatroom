@@ -93,55 +93,14 @@
               </scrollpane>
               <component id="8a7e8" class="javax.swing.JTextField" binding="chatEingabe">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <columns value="24"/>
+                </properties>
               </component>
               <component id="1a686" class="javax.swing.JButton" binding="buttonSenden">
                 <constraints/>
                 <properties>
                   <text value="senden"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="44750" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
-            <constraints/>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="efb68" class="javax.swing.JLabel">
-                <constraints/>
-                <properties>
-                  <text value="Nickname:"/>
-                  <verticalAlignment value="0"/>
-                </properties>
-              </component>
-              <component id="38a88" class="javax.swing.JLabel">
-                <constraints/>
-                <properties>
-                  <text value="Label"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="996c3" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
-            <constraints/>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="4dc94" class="javax.swing.JLabel">
-                <constraints/>
-                <properties>
-                  <text value="Nickname einstellen"/>
-                </properties>
-              </component>
-              <component id="f920d" class="javax.swing.JTextField">
-                <constraints/>
-                <properties/>
-              </component>
-              <component id="8a894" class="javax.swing.JButton">
-                <constraints/>
-                <properties>
-                  <text value="einstellen"/>
                 </properties>
               </component>
             </children>
@@ -275,7 +234,7 @@
                               <component id="e6f89" class="javax.swing.JTextField" binding="setNicknameTextField">
                                 <constraints/>
                                 <properties>
-                                  <columns value="12"/>
+                                  <columns value="8"/>
                                 </properties>
                               </component>
                               <component id="f2c7e" class="javax.swing.JButton" binding="setNicknameButton">

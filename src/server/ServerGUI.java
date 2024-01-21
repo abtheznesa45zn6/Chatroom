@@ -150,9 +150,9 @@ public class ServerGUI extends JFrame implements ValidityChecker {
 
                 if (currentPane != newPane) {
                     switch (newPane) {
-                        case Pane.BENUTZER -> updateBenutzerPane();
-                        case Pane.RÄUME -> updateRäumePane();
-                        case Pane.SERVER -> updateServerPane();
+                        case BENUTZER -> updateBenutzerPane();
+                        case RÄUME -> updateRäumePane();
+                        case SERVER -> updateServerPane();
                         default -> throw new IllegalStateException();
                     };
                 }
