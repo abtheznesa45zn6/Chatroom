@@ -80,6 +80,9 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
                 database.addThread(this);
 
+                // zur default-Gruppe hinzufügen
+                database.addUserAndThreadToGroup(this, user, "global");
+
                 sendGroupsOfLoggedInUser();
                 sendAllNicknames();
                 sendServername();

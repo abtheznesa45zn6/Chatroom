@@ -320,11 +320,16 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void raumLoeschen(String group) {
-        Logger.logVerwaltung("Raum "+group+" löschen");
-        database.deleteGroup(group);
-        Message message = new Message(ServerBefehl.RAUM_LOESCHEN, new String[]{group});
-        sendMessageToAllClientsInGroup(message, group);
-        updateRäume();
+        if (group.equals("global")){
+            feedbackLabel.setText("Der Standard-Raum kann nicht gelöscht werden.");
+        }
+        else {
+            Logger.logVerwaltung("Raum " + group + " löschen");
+            database.deleteGroup(group);
+            Message message = new Message(ServerBefehl.RAUM_LOESCHEN, new String[]{group});
+            sendMessageToAllClientsInGroup(message, group);
+            updateRäume();
+        }
     }
 
     private void raumnameAendern(String group, String newName) {
