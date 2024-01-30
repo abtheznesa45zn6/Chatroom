@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
@@ -72,6 +71,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JList listBenutzer;
     private JLabel verbindungLabel;
     private JLabel statusLabel;
+    private JLabel currentGroupLabel;
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -122,16 +122,18 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
-        JMenu menu = new JMenu("Menu");
+        JMenu profil = new JMenu("Profil");
         JMenu benutzer = new JMenu("Benutzer");
         JMenu raum = new JMenu("Raum");
         JMenu optionen = new JMenu("Optionen");
         JMenu senden = new JMenu("Senden");
-        menuBar.add(menu);
+        menuBar.add(profil);
         menuBar.add(benutzer);
         menuBar.add(raum);
         menuBar.add(optionen);
 
+        JMenuItem profilPasswortÄndern = new JMenuItem("Passwort ändern");
+        profil.add(profilPasswortÄndern);
 
         JMenuItem sendenJPG = new JMenuItem("JPG");
         senden.add(sendenJPG);
@@ -142,12 +144,21 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         sendenJPG.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 FileSenderGUI sendJPGDialog = new FileSenderGUI(client, currentGroup, true);
+                sendJPGDialog.start();
             }
         });
 
         sendenPDF.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 FileSenderGUI sendPDFBildDialog = new FileSenderGUI(client, currentGroup,false);
+                sendPDFBildDialog.start();
+            }
+        });
+
+        profilPasswortÄndern.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                PasswordChangeGUI passwordChangeGUI = new PasswordChangeGUI(client);
+                passwordChangeGUI.start();
             }
         });
 
@@ -217,7 +228,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
             public void actionPerformed(ActionEvent e) {
                 String textMessage = getAndReset(chatEingabe);
 
-                if (client.getAngemeldet()) {
+                if (client.isAngemeldet()) {
                     if (checkValidityOfText(textMessage)) {
                         client.sendTextMessage(currentGroup, textMessage);
                     }
@@ -236,6 +247,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
             @Override
             public void actionPerformed(ActionEvent e) {
                 client.sendAbmeldenMessage();
+                client.setAngemeldet(false);
                 card2.setVisible(false);
                 card1.setVisible(true);
             }
@@ -254,6 +266,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
                         System.out.println("Selected: " + group);
                         chatAusgabe.setText("");
                         currentGroup = group;
+                        currentGroupLabel.setText("Raum: "+group);
                         client.getMessagesFrom(group);
                         client.getUserList(group);
                 }
@@ -471,5 +484,44 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     public void setServerName(String newName) {
         statusLabel.setText("verbunden mit Server "+newName+".");
+    }
+
+    public void erstelleRaum(String groupName) {
+        addFeedback("Ein neuer Raum namens "+groupName+" wurde erstellt.");
+    }
+
+    public void aendereRaumname(String oldName, String newName) {
+        addFeedback("Der Raum namens +"+oldName+" wurde in"+newName+" umbenannt.");
+    }
+
+    public void loescheRaum(String geloeschterRaum) {
+        addFeedback("Der Raum +"+geloeschterRaum+" wurde gelöscht.");
+    }
+
+    public void verwarnen(String warnedUser) {
+        if (client.getAngemeldeterNutzer().equals(warnedUser)) {
+            addFeedback("Du wurdest verwarnt.");
+        }
+        else {
+            addFeedback("Nutzer "+warnedUser+" wurde verwarnt.");
+        }
+    }
+
+    public void kicken(String kickedUser) {
+        if (client.getAngemeldeterNutzer().equals(kickedUser)) {
+            addFeedback("Du wurdest vom Server gekickt.");
+        }
+        else {
+            addFeedback("Nutzer "+kickedUser+" wurde vom Server gekickt.");
+        }
+    }
+
+    public void bannen(String bannedUser) {
+        if (client.getAngemeldeterNutzer().equals(bannedUser)) {
+            addFeedback("Du wurdest vom Server gebannt.");
+        }
+        else {
+            addFeedback("Nutzer "+bannedUser+" wurde gebannt.");
+        }
     }
 }

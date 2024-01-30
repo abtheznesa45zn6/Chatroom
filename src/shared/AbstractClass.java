@@ -35,7 +35,10 @@ public abstract class AbstractClass extends Thread {
             this.in = new ObjectInputStream(socket.getInputStream());
             dingeTun();
 
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(e.getClass());
+            System.out.println("IO Exception bei establishStreamsAndRun");
         } finally {
             Logger.logVerbindungstrennung(socket, angemeldeterNutzer);
 
@@ -61,6 +64,7 @@ public abstract class AbstractClass extends Thread {
                 System.out.println("SocketException bei listenAndExecute");
                 return;
             } catch (EOFException e) {
+                e.printStackTrace();
                 System.out.println("EOFException bei listenAndExecute");
                 return;
             } catch (IOException e) {
@@ -100,6 +104,7 @@ public abstract class AbstractClass extends Thread {
     protected void sendMessage(ServerBefehl aktion, String... strings) {
         try {
             Message message = new Message(aktion, strings);
+            System.out.println("Message to send: "+message);
             Logger.log(message);
             out.writeObject(message);
         } catch (IOException e) {
@@ -108,6 +113,7 @@ public abstract class AbstractClass extends Thread {
     }
 
     public void sendMessage(Message message) {
+        System.out.println("Message to send: "+message);
         try {
             Logger.log(message);
             out.writeObject(message);
@@ -153,9 +159,11 @@ public abstract class AbstractClass extends Thread {
         }
     }
 
-    public boolean getAngemeldet() {
+    public boolean isAngemeldet() {
         return angemeldet;
     }
+
+    public void setAngemeldet(boolean a) {angemeldet=a;}
     public String getAngemeldeterNutzer() {
         return angemeldeterNutzer;
     }

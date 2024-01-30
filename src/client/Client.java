@@ -42,6 +42,8 @@ class Client extends AbstractClass implements ValidityChecker {
     public void dingeTun() {
 
         listenAndExecute();
+        clientGUI.abmelden();
+        clientGUI.dispose();
 
         System.out.println("Client beendet");
     }
@@ -103,22 +105,8 @@ class Client extends AbstractClass implements ValidityChecker {
         sendMessage(ServerBefehl.GET_USER_LIST, group, angemeldeterNutzer);
     }
 
-    protected TextMessage readTextMessage()  {
-        try {
-            return (TextMessage) in.readObject();
-
-        } catch (IOException e) {
-            System.out.println("Client Message readObject() IOException");
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            System.out.println("Client Message readObject() ClassNotFoundException");
-            throw new RuntimeException(e);
-        }
-    }
-
-    void changePassword(String neuesPasswort) {
-        sendMessage(ServerBefehl.SET_PASSWORD, angemeldeterNutzer, angemeldetesPasswort, neuesPasswort);
+    void changePassword(String altesPasswort, String neuesPasswort) {
+        sendMessage(ServerBefehl.SET_PASSWORD, angemeldeterNutzer, altesPasswort, neuesPasswort);
     }
 
     private void nutzerAnmelden(Message message) {
@@ -167,6 +155,7 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
     private void receiveUserList(Message message) {
+        // erstes Element ist die Gruppe, die Elemente danach sind die dazugehörigen User
         var groupAndUsers = new ArrayList<String>(Arrays.asList(message.getStringArray()));
         String group = groupAndUsers.remove(0);
         clientGUI.updateUsers(group, groupAndUsers);
@@ -194,44 +183,42 @@ class Client extends AbstractClass implements ValidityChecker {
 
     private void erstelleRaum(Message message) {
         String groupName = message.getStringAtIndex(0);
-        clientGUI.addFeedback("Ein neuer Raum namens +"+groupName+" wurde erstellt.");
-        sendRequestForGroupList(angemeldeterNutzer);
+        clientGUI.erstelleRaum(groupName);
+        sendRequestForGroupList(angemeldeterNutzer); //aktualisiert indirekt die Raumliste
     }
 
     private void aendereRaumname(Message message) {
         String oldName = message.getStringAtIndex(0);
         String newName = message.getStringAtIndex(1);
-        clientGUI.addFeedback("Der Raum namens +"+oldName+" wurde in"+newName+" umbenannt.");
-        sendRequestForGroupList(angemeldeterNutzer);
+        clientGUI.aendereRaumname(oldName, newName);
+        sendRequestForGroupList(angemeldeterNutzer); //aktualisiert indirekt die Raumliste
     }
 
     private void loescheRaum(Message message) {
         String geloeschterRaum = message.getStringAtIndex(0);
-        clientGUI.addFeedback("Der Raum +"+geloeschterRaum+" wurde gelöscht.");
-        sendRequestForGroupList(angemeldeterNutzer);
+        clientGUI.loescheRaum(geloeschterRaum);
+        sendRequestForGroupList(angemeldeterNutzer); //aktualisiert indirekt die Raumliste
     }
 
     private void verwarnen(Message message) {
         String warnedUser = message.getStringAtIndex(0);
-        if (angemeldeterNutzer.equals(warnedUser)) {
-            clientGUI.addFeedback("Du wurdest verwarnt.");
-        }
+        clientGUI.verwarnen(warnedUser);
     }
 
     private void kicken(Message message) {
         String kickedUser = message.getStringAtIndex(0);
+        clientGUI.kicken(kickedUser);
         if (angemeldeterNutzer.equals(kickedUser)) {
-            clientGUI.addFeedback("Du wurdest vom Server gekickt.");
+            clientGUI.abmelden();
         }
-        clientGUI.abmelden();
     }
 
     private void bannen(Message message) {
         String bannedUser = message.getStringAtIndex(0);
+        clientGUI.bannen(bannedUser);
         if (angemeldeterNutzer.equals(bannedUser)) {
-            clientGUI.addFeedback("Du wurdest vom Server gebannt.");
+            clientGUI.abmelden();
         }
-        clientGUI.abmelden();
     }
 
     private void setzeServername(Message message) {

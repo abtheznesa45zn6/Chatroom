@@ -36,7 +36,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case PICTURE_MESSAGE -> receivePictureMessage(message);
             case GET_MESSAGES_FROM -> getMessagesFrom(message);
             case SET_PASSWORD -> changePassword(message);
-            case GET_GROUPS -> sendGroups(message);
+            case GET_GROUPS -> sendGroupsOfLoggedInUser();
             case GET_USER_LIST -> sendUserList(message);
             case SET_NICKNAME -> setNickname(message);
             case GET_ALL_NICKNAMES -> sendAllNicknames();
@@ -55,8 +55,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         if (database.isRegistriert(user)) {
             sendMessage(ServerBefehl.FEEDBACK, "Name bereits vorhanden");
         } else {
-            database.setUserAndPassword(user, password);
-            database.addUser(user);
+            database.addUser(user, password);
             sendMessage(ServerBefehl.FEEDBACK, "Registration erfolgreich");
             System.out.println("client " + user + " registriert.");
         }
@@ -73,16 +72,15 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         else
 
         if (database.isRegistriert(user)) {
-            if (database.getPasswordForUser(user).equals(password)) {
+            if (database.isValidPassword(user, password)) {
 
                 if (angemeldet) {
                     abmelden();
                 }
 
-                // Der neue User/Thread wird der default Gruppe "global" hinzugefügt
-                database.addGroup("global");
-                database.addUserAndThreadToGroup(this, user, "global");
-                sendGroups(message);
+                database.addThread(this);
+
+                sendGroupsOfLoggedInUser();
                 sendAllNicknames();
                 sendServername();
 
@@ -115,7 +113,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String angemeldeterNutzer = message.getStringAtIndex(1);
         String text = message.getStringAtIndex(2);
 
-        if (!this.angemeldeterNutzer.equals(angemeldeterNutzer)) {return;}
+        //if (!this.angemeldeterNutzer.equals(angemeldeterNutzer)) {return;}
 
         if (database.currentUserIsInGroup(angemeldeterNutzer, group)) {
             TextMessage messageToSend = new TextMessage(ServerBefehl.TEXT_MESSAGE, new String[] {group, angemeldeterNutzer, text});
@@ -149,8 +147,10 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String group = message.getStringAtIndex(0);
 
         HashSet<ClientHandler> users = database.getThreadsOfGroup(group);
-        for (ClientHandler serverThread : users) {
-            serverThread.sendMessageToClient(message);
+        if (users != null) {
+            for (ClientHandler serverThread : users) {
+                serverThread.sendMessageToClient(message);
+            }
         }
     }
 
@@ -180,27 +180,23 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String user = message.getStringAtIndex(0);
         String password = message.getStringAtIndex(1);
         String neuesPasswort = message.getStringAtIndex(2);
-        String altesPasswort = database.getPasswordForUser(user);
 
-        if (altesPasswort == null) {
-            sendMessage(ServerBefehl.FEEDBACK, "Benutzername nicht vorhanden");
-        }
-        else {
-            if(altesPasswort.equals(password)) {
-                database.setPasswordForUser(neuesPasswort, user);
-                sendMessage(ServerBefehl.FEEDBACK, "Passwort wurde geändert");
-            }
-            else {
-                sendMessage(ServerBefehl.FEEDBACK, "Passwort ist falsch");
-            }
+        if (database.isValidPassword(user, password)) {
+            database.setUserPassword(user, neuesPasswort);
+            sendMessage(ServerBefehl.FEEDBACK, "Passwort wurde geändert");
+        } else {
+            sendMessage(ServerBefehl.FEEDBACK, "Passwort ist falsch");
         }
     }
 
-    private void sendGroups(Message message) {
-        String user = message.getStringAtIndex(0);
-        List<String> groups = database.getGroupsForUser(user);
+    /**
+     * Sendet an den angemeldeten Client alle Gruppen, in denen er sich befindet
+     */
+    public void sendGroupsOfLoggedInUser() {
+        List<String> groups = database.getGroupsForUser(angemeldeterNutzer);
         sendMessage(ServerBefehl.RECEIVE_GROUPS, groups.toArray(new String[0]));
     }
+
 
     private void sendUserList(Message message) {
         String group = message.getStringAtIndex(0);

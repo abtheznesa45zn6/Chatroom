@@ -12,7 +12,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Base64;
 
 public class FileSenderGUI extends JFrame {
@@ -29,7 +28,9 @@ public class FileSenderGUI extends JFrame {
         this.client = client;
         this.currentGroup = currentGroup;
         this.isPicture = isPicture;
+    }
 
+    public void start() {
         setTitle("Choose a file to send");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(400, 150);

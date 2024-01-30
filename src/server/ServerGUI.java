@@ -249,11 +249,14 @@ public class ServerGUI extends JFrame implements ValidityChecker {
         zumRaumHinzufügenButton.addActionListener(buttonListener -> {
             if (currentUser == null || currentGroup == null) {return;}
 
-            if (database.addUserToGroup(currentUser, currentGroup)) {
+            if (database.addUserAndThreadToGroup(currentUser, currentGroup)) {
+
+                updateGroupsInClientsOfGroup(currentGroup);
                 feedbackLabel.setText("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
                 Logger.logVerwaltung("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
             }
             else {
+                // TODO this is activated even if the user was added successfully
                 feedbackLabel.setText("Das Hinzufügen ist fehlgeschlagen.");
             }
         });
@@ -262,6 +265,10 @@ public class ServerGUI extends JFrame implements ValidityChecker {
         updateBenutzerPane();
         aufgabenComboBox.setModel(benutzerComboBoxModel);
         currentAufgabe = Aufgabe.SERVERNAME_SETZEN;
+    }
+
+    private void updateGroupsInClientsOfGroup(String group) {
+        database.getThreadsOfGroup(group).forEach(ClientHandler::sendGroupsOfLoggedInUser);
     }
 
     private void servernameSetzen(String newName) {
