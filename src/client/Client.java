@@ -59,7 +59,8 @@ class Client extends AbstractClass implements ValidityChecker {
             case PDF_MESSAGE -> receivePDFMessage(message);
             case PICTURE_MESSAGE -> receivePictureMessage(message);
             case RECEIVE_GROUPS -> receiveGroups(message);
-            case RECEIVE_USER_LIST -> receiveUserList(message);
+            case RECEIVE_USER_LIST_OF_GROUP -> receiveUserList(message);
+            case RECEIVE_COMPLETE_USER_LIST -> receiveCompleteUserList(message);
             case SET_NICKNAME -> updateNicknames(message);
             case RECEIVE_NICKNAME_LIST -> receiveNicknameList(message);
             case RAUM_ERSTELLEN -> erstelleRaum(message);
@@ -107,6 +108,7 @@ class Client extends AbstractClass implements ValidityChecker {
 
     void changePassword(String altesPasswort, String neuesPasswort) {
         sendMessage(ServerBefehl.SET_PASSWORD, angemeldeterNutzer, altesPasswort, neuesPasswort);
+        // TODO Passwort als char[] senden
     }
 
     private void nutzerAnmelden(Message message) {
@@ -158,8 +160,15 @@ class Client extends AbstractClass implements ValidityChecker {
         // erstes Element ist die Gruppe, die Elemente danach sind die dazugehörigen User
         var groupAndUsers = new ArrayList<String>(Arrays.asList(message.getStringArray()));
         String group = groupAndUsers.remove(0);
-        clientGUI.updateUsers(group, groupAndUsers);
+        var users = groupAndUsers;
+        clientGUI.updateUsersOfGroup(users, group);
     }
+
+    private void receiveCompleteUserList(Message message) {
+        var users = new ArrayList<String>(Arrays.asList(message.getStringArray()));
+        clientGUI.updateUserList(users);
+    }
+
 
     private void updateNicknames(Message message) {
         String user = message.getStringAtIndex(0);

@@ -16,9 +16,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public class ClientGUI extends JFrame implements ValidityChecker {
@@ -54,6 +52,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JTabbedPane tabbedPane1;
     private JTextArea textAreaBenutzer;
     private JTextArea textAreaRäume;
+    private JMenu benutzer;
     private JButton buttonSenden;
     private JLabel verbindung;
     private JLabel status;
@@ -68,7 +67,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JTextArea feedbackTextArea;
     private JPanel cardObenRechts;
     private JButton abmeldenButton;
-    private JList listBenutzer;
+    private JList<String> listBenutzer;
     private JLabel verbindungLabel;
     private JLabel statusLabel;
     private JLabel currentGroupLabel;
@@ -123,7 +122,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         setJMenuBar(menuBar);
 
         JMenu profil = new JMenu("Profil");
-        JMenu benutzer = new JMenu("Benutzer");
+        benutzer = new JMenu("Benutzer");
         JMenu raum = new JMenu("Raum");
         JMenu optionen = new JMenu("Optionen");
         JMenu senden = new JMenu("Senden");
@@ -421,7 +420,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
 
-    public void setNickname(String user) {
+    void setNickname(String user) {
         labelNickname.setText(user);
         card2.setVisible(true);
         card1.setVisible(false);
@@ -435,7 +434,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         listRäume.setModel(listModel);
     }
 
-    public void updateUsers(String group, ArrayList<String> users) {
+    void updateUsersOfGroup(ArrayList<String> users, String group) {
         if(currentGroup.equals(group)){
             DefaultListModel<String> listModel = new DefaultListModel<>();
             for (String user : users) {
@@ -445,6 +444,25 @@ public class ClientGUI extends JFrame implements ValidityChecker {
             listBenutzer.setModel(listModel);
         }
     }
+
+
+    void updateUserList(ArrayList<String> users) {
+        for (String user : users) {
+            JMenu jMenu = new JMenu(user);
+            JMenuItem privaterChat = new JMenuItem("Privater Chat");
+            jMenu.add(privaterChat);
+            privaterChat.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent event) {
+                    String clickedUser = jMenu.getText();
+
+                    System.out.println("Clicked user: " + clickedUser);
+                }
+            });
+            benutzer.add(jMenu);
+        }
+    }
+
+
 
 
     void addFeedback (String feedbackLine) {
@@ -524,4 +542,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
             addFeedback("Nutzer "+bannedUser+" wurde gebannt.");
         }
     }
+
+
 }

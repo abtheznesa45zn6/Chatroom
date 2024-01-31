@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 
 public class PasswordChangeGUI extends JFrame {
 
@@ -22,14 +21,14 @@ public class PasswordChangeGUI extends JFrame {
 
     public void start(){
 
-        setTitle("Password Change");
+        setTitle("Passwort ändern");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(300, 150);
         setLocationRelativeTo(null);
 
-        oldPasswordLabel = new JLabel("Old Password:");
+        oldPasswordLabel = new JLabel("Altes Passwort:");
         oldPasswordField = new JPasswordField(20);
-        newPasswordLabel = new JLabel("New Password:");
+        newPasswordLabel = new JLabel("Neues Passwort:");
         newPasswordField = new JPasswordField(20);
         okButton = new JButton("OK");
 
@@ -59,15 +58,8 @@ public class PasswordChangeGUI extends JFrame {
         char[] oldPassword = oldPasswordField.getPassword();
         char[] newPassword = newPasswordField.getPassword();
 
-        // Perform password change logic here
-
-        // For now, let's just print the passwords for demonstration purposes
-        System.out.println("Old Password: " + new String(oldPassword));
-        System.out.println("New Password: " + new String(newPassword));
-
         client.changePassword(new String(oldPassword), new String(newPassword));
 
-        // Close the window
         dispose();
     }
 }

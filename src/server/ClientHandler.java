@@ -57,7 +57,15 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         } else {
             database.addUser(user, password);
             sendMessage(ServerBefehl.FEEDBACK, "Registration erfolgreich");
-            System.out.println("client " + user + " registriert.");
+            Logger.logVerwaltung("Benutzer " + user + "hat sich registriert.");
+            sendeAllenAktivenClientsDieNutzerliste();
+        }
+    }
+
+    private void sendeAllenAktivenClientsDieNutzerliste() {
+        var threads = database.getAllThreads();
+        for (ClientHandler thread : threads) {
+            thread.sendAllUsers();
         }
     }
 
@@ -84,6 +92,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
                 database.addUserAndThreadToGroup(this, user, "global");
 
                 sendGroupsOfLoggedInUser();
+                sendAllUsers();
                 sendAllNicknames();
                 sendServername();
 
@@ -101,6 +110,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         }
 
     }
+
 
 
 
@@ -210,7 +220,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
             users.addAll(database.getUsernamesInGroup(group));
 
-            sendMessage(ServerBefehl.RECEIVE_USER_LIST, users.toArray(new String[0]));
+            sendMessage(ServerBefehl.RECEIVE_USER_LIST_OF_GROUP, users.toArray(new String[0]));
         }
     }
 
@@ -225,6 +235,12 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             }
         }
         System.out.printf("Nickname von %s zu ändern ist gescheitert.\n", angemeldeterNutzer);
+    }
+
+    private void sendAllUsers() {
+        ArrayList<String> users = new ArrayList<>(database.getAllUsers());
+
+        sendMessage(ServerBefehl.RECEIVE_COMPLETE_USER_LIST, users.toArray(new String[0]));
     }
 
     private void sendAllNicknames() {
