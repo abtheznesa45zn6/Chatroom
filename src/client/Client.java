@@ -5,6 +5,7 @@ import shared.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 class Client extends AbstractClass implements ValidityChecker {
     private Set<String> userList = new TreeSet<>();
@@ -70,9 +71,12 @@ class Client extends AbstractClass implements ValidityChecker {
             case KICKEN -> kicken(message);
             case BANNEN -> bannen(message);
             case SERVERNAME_SETZEN -> setzeServername(message);
+            //case PRIVATE_GROUP_LIST -> setPrivateGroupList(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         };
     }
+
+
 
 
     //getNewMessagesFromGroupSinceTime(group, time)
@@ -236,7 +240,6 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
 
-
     private void saveMessageToCache(Message message) {
         String group = message.getStringAtIndex(0);
         List<Message> groupMessages = messages.computeIfAbsent(group, k -> new ArrayList<>());
@@ -252,5 +255,9 @@ class Client extends AbstractClass implements ValidityChecker {
 
     private void sendRequestForGroupList(String user) {
         sendMessage(ServerBefehl.GET_GROUPS, user);
+    }
+
+    void requestPrivateChat(String group, String empfänger) {
+        sendMessage(ServerBefehl.REQUEST_PRIVATE_CHAT, new String[]{group, empfänger});
     }
 }

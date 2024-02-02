@@ -6,6 +6,7 @@ package shared;
 
 public interface ValidityChecker {
     String disallowedSpaceCharacter = "\u202F";
+    String privateChatIndicator = "Private Verbindung";
     public default boolean checkValidityOfName(String name) {
         return checkValidityOfNickname(name);
     }
@@ -30,4 +31,11 @@ public interface ValidityChecker {
         }
         return true;
     }
+    public default boolean checkValidityOfPublicGroup(String group) {
+        if (group.isEmpty() || group.isBlank() || group.contains(privateChatIndicator)) {
+            return false;
+        }
+        return true;
+    }
+
 }

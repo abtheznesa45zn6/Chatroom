@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="client.PrivateChatGUI">
+  <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="736" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="d96ea" binding="cards" layout-manager="CardLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="e70a3" binding="keineVerbindungCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="Card1"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Private Verbindung"/>
+            <children>
+              <component id="a5242" class="javax.swing.JLabel">
+                <constraints border-constraint="North"/>
+                <properties>
+                  <text value="&lt;html&gt;Derzeit besteht keine private Verbindung.&lt;/html&gt;"/>
+                </properties>
+              </component>
+              <component id="8fe73" class="javax.swing.JButton" binding="keineVerbindungButton" default-binding="true">
+                <constraints border-constraint="Center"/>
+                <properties>
+                  <text value="Verbindung aufbauen"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="642bf" binding="aufbauenVerbindungCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="Card2"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Private Verbindung"/>
+            <children>
+              <component id="b73e0" class="javax.swing.JLabel">
+                <constraints border-constraint="North"/>
+                <properties>
+                  <text value="&lt;html&gt;Die Verbindung wird aufgabaut. Baut der von dir angefragte Nutzer auch die Verbindung auf, wird der Chat erstellt.&lt;/html&gt;"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="fbb8e" binding="aufgebauteVerbindungCard" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="Card3"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Private Verbindung"/>
+            <children>
+              <scrollpane id="30544" binding="chatAusgabeScrollPane">
+                <constraints border-constraint="Center"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="55d1d" class="javax.swing.JTextArea" binding="chatAusgabe">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <grid id="d5701" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+                <constraints border-constraint="South"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="d42ae" class="javax.swing.JTextField" binding="chatEingabe">
+                    <constraints/>
+                    <properties>
+                      <columns value="20"/>
+                    </properties>
+                  </component>
+                  <component id="5cb30" class="javax.swing.JButton" binding="buttonSenden">
+                    <constraints/>
+                    <properties>
+                      <text value="senden"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

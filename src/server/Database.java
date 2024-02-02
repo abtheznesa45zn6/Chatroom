@@ -11,7 +11,7 @@ import java.util.concurrent.Semaphore;
  * benutzt Nutzername als unique identifier
  * benutzt Raumname als unique identifier -> kann zu Bugs führen, da der Name änderbar ist
  */
-class Database {
+class Database implements ValidityChecker {
     private final PwAuthenticator passwordAuthenticator = new PwAuthenticator();
     private final SQLiteDataSource dataSource;
     private final Semaphore semaphoreSQLite;
@@ -24,18 +24,21 @@ class Database {
     final Set<ClientHandler> allThreads = Collections.synchronizedSet(new HashSet<>());
 
     final Map<String, ArrayList<Message>> messages = Collections.synchronizedMap(new HashMap<String, ArrayList<Message>>());
+    Map<String, Set<String>> privateGroups = Collections.synchronizedMap(new HashMap<>());
+
 
     private Database() {
         this.semaphoreSQLite = new Semaphore(1);
         this.dataSource = new SQLiteDataSource();
         dataSource.setUrl("jdbc:sqlite:userAndGroup.db");
         createDatabaseIfNotExists();
-        addGroup("global");
+        createPublicGroup("global");
     }
 
     public static Database getInstance() {
         return NestedSingletonHelper.databaseSingleton;
     }
+
     private static class NestedSingletonHelper {
         public static Database databaseSingleton = new Database();
     }
@@ -78,13 +81,14 @@ class Database {
                     "username TEXT UNIQUE," +
                     "nickname TEXT," +
                     "password TEXT," +
-                    "IS_BANNED INTEGER DEFAULT 0);"; // Adding IS_BANNED attribute with default value 0 (false)
+                    "is_banned INTEGER DEFAULT 0);"; // Adding IS_BANNED attribute with default value 0 (false)
             statement.executeUpdate(createUserTableQuery);
 
             // Create groups table
             String createGroupTableQuery = "CREATE TABLE IF NOT EXISTS groups (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    "group_name TEXT UNIQUE);";
+                    "group_name TEXT UNIQUE," +
+                    "is_private INTEGER DEFAULT 0);";
             statement.executeUpdate(createGroupTableQuery);
 
             // Create user_groups table for the relationship
@@ -160,7 +164,20 @@ class Database {
             semaphoreSQLite.release();
         }
 
+
+        userGroups.addAll(getAllPrivateGroupsForUser(username));
+
         return userGroups;
+    }
+
+    private List<String> getAllPrivateGroupsForUser(String username) {
+        var list = new ArrayList<String>();
+        for (String groupName : privateGroups.keySet()) {
+            if (groupName.contains(username)) {
+                list.add(groupName);
+            }
+        }
+        return list;
     }
 
     public List<String> getAllUsers() {
@@ -743,7 +760,8 @@ class Database {
         }
     }
 
-    public void createGroup(String groupName) {
+    public void createPublicGroup(String groupName) {
+        if (checkValidityOfPublicGroup(groupName)){return;}
         try {
             semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
             try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
@@ -765,7 +783,27 @@ class Database {
         } catch (InterruptedException | SQLException e) {
             e.printStackTrace(); // Handle exceptions according to your needs
         } finally {
-            semaphoreSQLite.release(); // Release the permit in a finally block to ensure it's released even if an exception occurs
+            semaphoreSQLite.release(); // Release the permit in a finally-block to ensure it's released even if an exception occurs
+        }
+    }
+
+    public boolean createPrivateGroup(ClientHandler clientHandler, String groupName, String angemeldeterNutzer, String empfänger) {
+        addThreadToGroup(clientHandler, groupName);
+
+        if (privateGroups.containsKey(groupName)) {
+            Set<String> privateGroup = privateGroups.get(groupName);
+            if (!privateGroup.contains(angemeldeterNutzer)){
+                privateGroup.add(angemeldeterNutzer);
+                privateGroups.put(groupName, privateGroup);
+            }
+            if (privateGroup.contains(empfänger)){
+                return true;
+            }
+            return false;
+        }
+        else {
+            privateGroups.computeIfAbsent(groupName, k -> new HashSet<>()).add(angemeldeterNutzer);
+            return false;
         }
     }
 }

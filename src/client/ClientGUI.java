@@ -18,24 +18,25 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ClientGUI extends JFrame implements ValidityChecker {
 
-    Client client;
+    private Client client;
 
     private String currentGroup = "global";
 
     private HashMap<String, String> nicknameMap = new HashMap<>();
 
-    public ClientGUI(Client client) throws HeadlessException {
+    private Set<String> privateGroups = new HashSet<>();
+    HashMap<String, PrivateChatGUI> groupAndChat = new HashMap<>();
+
+    ClientGUI(Client client) throws HeadlessException {
         this.client = client;
         init();
     }
 
-    public ClientGUI() throws HeadlessException {
-        this.client = null;
-        init();
-    }
 
     private JPanel mainPanel;
     private JPanel ebene1Links;
@@ -56,7 +57,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JButton buttonSenden;
     private JLabel verbindung;
     private JLabel status;
-    private JList listRäume;
+    private JList<String> listRäume;
     private JLabel labelNickname;
     private JPanel card2;
     private JPanel card1;
@@ -71,6 +72,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JLabel verbindungLabel;
     private JLabel statusLabel;
     private JLabel currentGroupLabel;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
     Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
     int w = (d.width - getSize().width) / 2;
@@ -79,22 +81,18 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     private void init() {
         setContentPane(mainPanel);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(w, h);
         setLocationRelativeTo(null);
         setResizable(true);
-        System.out.println(w);
-        System.out.println(h);
 
         // Window close operation
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.addWindowListener(
                 new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
                         client.sendAbmeldenMessage();
                         client.beenden(client);
-                        dispose();
                     }
                 });
 
@@ -103,7 +101,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     private void initMainFrameComponents() {
-        //card2.setVisible(false);
         addMenu();
         ebene1Links.setPreferredSize(new Dimension(w/2, h));
         ebene1Rechts.setPreferredSize(new Dimension(w/2, h));
@@ -140,29 +137,20 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         senden.add(sendenPDF);
         menuBar.add(senden);
 
-        sendenJPG.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                FileSenderGUI sendJPGDialog = new FileSenderGUI(client, currentGroup, true);
-                sendJPGDialog.start();
-            }
+        sendenJPG.addActionListener(event -> {
+            FileSenderGUI sendJPGDialog = new FileSenderGUI(client, currentGroup, true);
+            sendJPGDialog.start();
         });
 
-        sendenPDF.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                FileSenderGUI sendPDFBildDialog = new FileSenderGUI(client, currentGroup,false);
-                sendPDFBildDialog.start();
-            }
+        sendenPDF.addActionListener(event -> {
+            FileSenderGUI sendPDFBildDialog = new FileSenderGUI(client, currentGroup,false);
+            sendPDFBildDialog.start();
         });
 
-        profilPasswortÄndern.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                PasswordChangeGUI passwordChangeGUI = new PasswordChangeGUI(client);
-                passwordChangeGUI.start();
-            }
+        profilPasswortÄndern.addActionListener(event -> {
+            PasswordChangeGUI passwordChangeGUI = new PasswordChangeGUI(client);
+            passwordChangeGUI.start();
         });
-
-
-
     }
 
     private void initLinks() {
@@ -276,7 +264,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     private void anmeldenOderRegistrieren(BiConsumer<String, String> biConsumer) {
         String benutzer = benutzernameTextField.getText();
-        //String password = Arrays.toString(passwordTextField.getPassword());
+        //TODO passwordTextField.getPassword());
         String password = passwordTextField.getText();
 
         if (!checkValidityOfName(benutzer)) {
@@ -297,9 +285,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private void registrieren(String benutzer, String password) {
         client.registrieren(benutzer, password);
     }
-    private void nicknameÄndern(String nickname) {
-        client.setNicknameTo(nickname);
-    }
 
     private String getAndReset(JTextComponent textArea) {
         String input = textArea.getText();
@@ -311,24 +296,25 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         addFeedback(feedback);
     }
 
-    private void addTextMessageToCurrentChat(Message message) {
-        String user = message.getStringAtIndex(1);
-        String text = message.getStringAtIndex(2);
-        LocalDateTime time = message.getTime();
+    private void addTextMessageToCurrentChat(TextMessage message) {
+        appendToChat(chatAusgabe, message);
+    }
 
-        // Formatting the time using DateTimeFormatter
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        String formattedTime = time.format(formatter);
+    private void addTextMessageToPrivateChat(TextMessage message) {
+        PrivateChatGUI privateChatGUI = groupAndChat.get(message.getGroup());
+        if (privateChatGUI != null) {
+            JTextArea chat = privateChatGUI.getChatAusgabe();
+            appendToChat(chat, message);
+        }
+    }
 
-
-        chatAusgabe.append("\n"
-                +"["
-                +formattedTime
-                +"]"
-                +" "
-                +nicknameOfUser(user)
-                +": "
-                +text);
+    private void appendToChat(JTextArea chat, TextMessage message){
+        chat.append(
+                String.format(
+                        "\n[%s] %s: %s",
+                        message.getTime().format(formatter),
+                        nicknameOfUser(message.getUser()),
+                        message.getText()));
     }
 
     private String nicknameOfUser(String user) {
@@ -343,11 +329,16 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     void resetStatus(){
         statusLabel.setText("zu keinem Server verbunden.");
-        verbindungLabel.setText("nicht angemeldet.");
+        //verbindungLabel.setText("nicht angemeldet.");
+        verbindungLabel.setText("");
     }
 
 
     // API für Client
+
+    void setPrivateGroups(Set<String> pg) {
+        privateGroups = pg;
+    }
 
     void abmelden() {
         resetStatus();
@@ -356,12 +347,17 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     void showMessageInGUI(TextMessage message) {
-        String group = message.getStringAtIndex(0);
+        String group = message.getGroup();
 
         if (isCurrentGroup(group)) {
             addTextMessageToCurrentChat(message);
         }
+
+        if (privateGroups.contains(message.getGroup())){
+            addTextMessageToPrivateChat(message);
+        }
     }
+
 
     void showMessageInGUI(PictureMessage message) {
         String group = message.getStringAtIndex(0);
@@ -428,9 +424,31 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     void updateRooms (ArrayList<String> rooms) {
         DefaultListModel<String> listModel = new DefaultListModel<>();
+        HashSet<String> newPrivateGroups = new HashSet<>();
+
         for (String group : rooms) {
-            listModel.addElement(group);
+            if (group.contains(privateChatIndicator)){
+                newPrivateGroups.add(group);
+
+
+                // Wenn es ein neuer privater Chat ist, für den ein Fenster geöffnet ist
+                if ((!privateGroups.contains(group)) && groupAndChat.containsKey(group)) {
+                    groupAndChat.get(group).chatStarten();
+                }
+
+/*
+                if (groupAndChat.containsKey(group)) {
+                    groupAndChat.get(group).chatStarten();
+                }
+
+ */
+
+            }
+            else {
+                listModel.addElement(group);
+            }
         }
+        privateGroups = newPrivateGroups;
         listRäume.setModel(listModel);
     }
 
@@ -438,31 +456,45 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         if(currentGroup.equals(group)){
             DefaultListModel<String> listModel = new DefaultListModel<>();
             for (String user : users) {
-                String line = nicknameOfUser(user) + " (" + user + ")";
+                String line = String.format("%s (%s)", nicknameOfUser(user), user);
                 listModel.addElement(line);
             }
             listBenutzer.setModel(listModel);
         }
     }
 
-
     void updateUserList(ArrayList<String> users) {
         for (String user : users) {
             JMenu jMenu = new JMenu(user);
             JMenuItem privaterChat = new JMenuItem("Privater Chat");
             jMenu.add(privaterChat);
-            privaterChat.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent event) {
-                    String clickedUser = jMenu.getText();
 
-                    System.out.println("Clicked user: " + clickedUser);
+            privaterChat.addActionListener(event -> {
+                String clickedUser = jMenu.getText();
+
+                PrivateChatGUI privateChatGUI = new PrivateChatGUI(client, this, getPrivateGroupNameOfGroupWithUser(clickedUser), clickedUser);
+                if (hasPrivateGroupWith(clickedUser)) {
+                    privateChatGUI.start(PrivateChatStatus.VERBINDUNG_AUFGEBAUT);
+                }
+                else {
+                    privateChatGUI.start(PrivateChatStatus.KEINE_VERBINDUNG);
                 }
             });
+
             benutzer.add(jMenu);
         }
     }
 
+    private String getPrivateGroupNameOfGroupWithUser(String user1) {
+        String user2 = client.getAngemeldeterNutzer();
+        return Stream.of(user1, user2)
+                .sorted()
+                .collect(Collectors.joining(" & ", privateChatIndicator, ""));
+    }
 
+    private boolean hasPrivateGroupWith(String user) {
+        return privateGroups.contains(getPrivateGroupNameOfGroupWithUser(user));
+    }
 
 
     void addFeedback (String feedbackLine) {

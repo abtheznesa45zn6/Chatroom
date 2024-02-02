@@ -342,7 +342,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
 
     private void raumErstellen(String group) {
         Logger.logVerwaltung("Raum "+group+" erstellen");
-        database.createGroup(group);
+        database.createPublicGroup(group);
         Message message = new Message(ServerBefehl.RAUM_ERSTELLEN, new String[]{group});
         sendMessageToAllClientsInGroup(message, group);
         updateRäume();

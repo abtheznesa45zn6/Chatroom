@@ -40,6 +40,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case GET_USER_LIST -> sendUserList(message);
             case SET_NICKNAME -> setNickname(message);
             case GET_ALL_NICKNAMES -> sendAllNicknames();
+            case REQUEST_PRIVATE_CHAT -> requestPrivateChat(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
@@ -128,7 +129,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
         //if (!this.angemeldeterNutzer.equals(angemeldeterNutzer)) {return;}
 
-        if (database.currentUserIsInGroup(angemeldeterNutzer, group)) {
+        if (database.currentUserIsInGroup(angemeldeterNutzer, group) || group.contains(privateChatIndicator)) {
             TextMessage messageToSend = new TextMessage(ServerBefehl.TEXT_MESSAGE, new String[] {group, angemeldeterNutzer, text});
             database.addMessage(messageToSend);
             sendMessageToAllClientsInGroup(messageToSend);
@@ -247,6 +248,21 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         ArrayList<String> users = new ArrayList<>(database.getNicknamesAsList());
 
         sendMessage(ServerBefehl.RECEIVE_NICKNAME_LIST, users.toArray(new String[0]));
+    }
+
+    private void requestPrivateChat(Message message) {
+        String group = message.getStringAtIndex(0);
+        String empfänger = message.getStringAtIndex(1);
+
+        if (database.createPrivateGroup(this, group, angemeldeterNutzer, empfänger)) {
+            //sendGroupsOfLoggedInUser();
+        }
+        else {
+            //sendMessage(ServerBefehl.FEEDBACK, angemeldeterNutzer+" fragt eine private Verbindung an");
+        }
+
+        database.getThreadsOfGroup(group).forEach(ClientHandler::sendGroupsOfLoggedInUser);
+
     }
 
     private void sendServername() {
