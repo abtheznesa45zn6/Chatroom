@@ -22,7 +22,7 @@
               <component id="a5242" class="javax.swing.JLabel">
                 <constraints border-constraint="North"/>
                 <properties>
-                  <text value="&lt;html&gt;Derzeit besteht keine private Verbindung.&lt;/html&gt;"/>
+                  <text value="&lt;html&gt;Bei einer privaten Verbindung werden keine Nachrichten gespeichert. Beim Schließen des Fensters wird die Verbindung geschlossen. Derzeit besteht keine private Verbindung.&lt;/html&gt;"/>
                 </properties>
               </component>
               <component id="8fe73" class="javax.swing.JButton" binding="keineVerbindungButton" default-binding="true">
@@ -43,7 +43,7 @@
               <component id="b73e0" class="javax.swing.JLabel">
                 <constraints border-constraint="North"/>
                 <properties>
-                  <text value="&lt;html&gt;Die Verbindung wird aufgabaut. Baut der von dir angefragte Nutzer auch die Verbindung auf, wird der Chat erstellt.&lt;/html&gt;"/>
+                  <text value="&lt;html&gt;Die Verbindung wird aufgebaut. Baut der von dir angefragte Nutzer auch die Verbindung auf, wird der Chat erstellt. Wenn du das Fenster schließt, wird der Verbindungsaufbau abgebrochen.&lt;/html&gt;"/>
                 </properties>
               </component>
             </children>

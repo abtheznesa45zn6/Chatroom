@@ -5,7 +5,6 @@ import shared.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 class Client extends AbstractClass implements ValidityChecker {
     private Set<String> userList = new TreeSet<>();
@@ -71,15 +70,13 @@ class Client extends AbstractClass implements ValidityChecker {
             case KICKEN -> kicken(message);
             case BANNEN -> bannen(message);
             case SERVERNAME_SETZEN -> setzeServername(message);
-            //case PRIVATE_GROUP_LIST -> setPrivateGroupList(message);
+            case REMOVE_PRIVATE_CHAT -> removePrivateGroup(message);
+            case VERBINDUNG_STARTEN -> verbindungStarten(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         };
     }
 
 
-
-
-    //getNewMessagesFromGroupSinceTime(group, time)
 
     void registrieren(String user, String password) {
         sendMessage(ServerBefehl.REGISTRIEREN, user, password);
@@ -129,14 +126,11 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
     private void receiveTextMessage(Message message) {
-
         if (message instanceof TextMessage textMessage) {
             clientGUI.showMessageInGUI(textMessage);
         } else {
             throw new IllegalStateException();
         }
-
-        //saveMessageToCache(message);
     }
 
     private void receivePictureMessage(Message message) {
@@ -240,24 +234,25 @@ class Client extends AbstractClass implements ValidityChecker {
     }
 
 
-    private void saveMessageToCache(Message message) {
-        String group = message.getStringAtIndex(0);
-        List<Message> groupMessages = messages.computeIfAbsent(group, k -> new ArrayList<>());
-        groupMessages.add(message);
-    }
-
-
-
-    private void getAllMessagesFromRoom () {
-
-    }
-
-
     private void sendRequestForGroupList(String user) {
         sendMessage(ServerBefehl.GET_GROUPS, user);
     }
 
     void requestPrivateChat(String group, String empfänger) {
-        sendMessage(ServerBefehl.REQUEST_PRIVATE_CHAT, new String[]{group, empfänger});
+        sendMessage(ServerBefehl.REQUEST_PRIVATE_CHAT, group, empfänger);
+    }
+
+    void sendRemovePrivateGroup(String group) {
+        sendMessage(ServerBefehl.REMOVE_PRIVATE_CHAT, group);
+    }
+
+    private void removePrivateGroup(Message message) {
+        String group = message.getStringAtIndex(0);
+        clientGUI.removePrivateGroup(group);
+    }
+
+    private void verbindungStarten(Message message) {
+        String group = message.getStringAtIndex(0);
+        clientGUI.verbindungStarten(group);
     }
 }

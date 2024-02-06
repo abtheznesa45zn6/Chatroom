@@ -45,7 +45,7 @@ class Database implements ValidityChecker {
 
 
 
-    public void addThread(ClientHandler clientHandler) {
+    public void addThreadToAllThreads(ClientHandler clientHandler) {
         allThreads.add(clientHandler);
         addThreadToEveryGroup(clientHandler);
     }
@@ -172,11 +172,12 @@ class Database implements ValidityChecker {
 
     private List<String> getAllPrivateGroupsForUser(String username) {
         var list = new ArrayList<String>();
-        for (String groupName : privateGroups.keySet()) {
-            if (groupName.contains(username)) {
-                list.add(groupName);
+            for (String groupName : privateGroups.keySet()) {
+                if (groupName.contains(username)) {
+                    list.add(groupName);
+                }
             }
-        }
+
         return list;
     }
 
@@ -229,7 +230,7 @@ class Database implements ValidityChecker {
         }
 
 
-    void removeThreadFromAllGroups(ClientHandler thread) {
+    void removeThread(ClientHandler thread) {
         allThreads.remove(thread);
 
         synchronized (groupAndThread) {
@@ -787,25 +788,29 @@ class Database implements ValidityChecker {
         }
     }
 
-    public boolean createPrivateGroup(ClientHandler clientHandler, String groupName, String angemeldeterNutzer, String empfänger) {
-        addThreadToGroup(clientHandler, groupName);
 
-        if (privateGroups.containsKey(groupName)) {
-            Set<String> privateGroup = privateGroups.get(groupName);
-            if (!privateGroup.contains(angemeldeterNutzer)){
-                privateGroup.add(angemeldeterNutzer);
-                privateGroups.put(groupName, privateGroup);
-            }
-            if (privateGroup.contains(empfänger)){
-                return true;
-            }
-            return false;
-        }
-        else {
-            privateGroups.computeIfAbsent(groupName, k -> new HashSet<>()).add(angemeldeterNutzer);
-            return false;
-        }
+
+
+    public void addToPrivateGroup(ClientHandler clientHandler, String groupName, String user) {
+        addThreadToGroup(clientHandler, groupName);
+        privateGroups.computeIfAbsent(groupName, k -> new HashSet<>()).add(user);
     }
+
+    public boolean isPrivateGroup(String groupName) {
+        return privateGroups.containsKey(groupName);
+    }
+
+    public boolean privateGroupContainsUser(String group, String user) {
+        return privateGroups.get(group).contains(user);
+    }
+
+    public void removePrivateGroup(String group) {
+        privateGroups.remove(group);
+        groupAndThread.remove(group);
+        System.out.println(group+" deleted");
+    }
+
+
 }
 
 

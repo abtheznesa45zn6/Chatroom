@@ -29,7 +29,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     private HashMap<String, String> nicknameMap = new HashMap<>();
 
-    private Set<String> privateGroups = new HashSet<>();
+    Set<String> privateGroups = new HashSet<>();
     HashMap<String, PrivateChatGUI> groupAndChat = new HashMap<>();
 
     ClientGUI(Client client) throws HeadlessException {
@@ -165,10 +165,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         chatAusgabeScrollPane.setPreferredSize(new Dimension((int)(w/2.2), h/8*4));
 
         chatEingabe.setPreferredSize(new Dimension((int)(w/2), h/20));
-
-
-        // Listeners
-
     }
 
 
@@ -429,20 +425,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         for (String group : rooms) {
             if (group.contains(privateChatIndicator)){
                 newPrivateGroups.add(group);
-
-
-                // Wenn es ein neuer privater Chat ist, für den ein Fenster geöffnet ist
-                if ((!privateGroups.contains(group)) && groupAndChat.containsKey(group)) {
-                    groupAndChat.get(group).chatStarten();
-                }
-
-/*
-                if (groupAndChat.containsKey(group)) {
-                    groupAndChat.get(group).chatStarten();
-                }
-
- */
-
+                // TODO Löschen
             }
             else {
                 listModel.addElement(group);
@@ -465,6 +448,12 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     void updateUserList(ArrayList<String> users) {
         for (String user : users) {
+            // falls es der Nutzer selbst ist, nicht hinzufügen
+            // beim ersten Mal ist der Nutzername nur im benutzernameTextField vorhanden
+            if (user.equals(client.getAngemeldeterNutzer()) || user.equals(benutzernameTextField.getText())) {
+                continue;
+            }
+
             JMenu jMenu = new JMenu(user);
             JMenuItem privaterChat = new JMenuItem("Privater Chat");
             jMenu.add(privaterChat);
@@ -575,5 +564,19 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         }
     }
 
+    public void removePrivateGroup(String group) {
+        if (groupAndChat.containsKey(group)) {
+            PrivateChatGUI privateChatGUI = groupAndChat.get(group);
+            if (privateChatGUI != null) {
+                privateChatGUI.dispose();
+            }
+            groupAndChat.remove(group);
+            privateGroups.remove(group);
+            userBenachritigen("Die "+group+" wurde geschlossen.");
+        }
+    }
 
+    public void verbindungStarten(String group) {
+        groupAndChat.get(group).chatStarten();
+    }
 }

@@ -17,7 +17,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     @Override
     protected void dingeTun() {
       listenAndExecute();
-      database.removeThreadFromAllGroups(this);
+      database.removeThread(this);
     }
 
 
@@ -41,9 +41,12 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case SET_NICKNAME -> setNickname(message);
             case GET_ALL_NICKNAMES -> sendAllNicknames();
             case REQUEST_PRIVATE_CHAT -> requestPrivateChat(message);
+            case REMOVE_PRIVATE_CHAT -> removePrivateChat(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
+
+
 
 
     private void registrieren(Message message) {
@@ -87,7 +90,11 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
                     abmelden();
                 }
 
-                database.addThread(this);
+                angemeldet = true;
+                angemeldeterNutzer = user; // muss vor addThread kommen
+
+
+                database.addThreadToAllThreads(this);
 
                 // zur default-Gruppe hinzufügen
                 database.addUserAndThreadToGroup(this, user, "global");
@@ -97,8 +104,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
                 sendAllNicknames();
                 sendServername();
 
-                angemeldet = true;
-                angemeldeterNutzer = user;
+
                 sendMessage(ServerBefehl.ANMELDEN_ERFOLGREICH, user);
                 sendMessage(ServerBefehl.FEEDBACK, "Anmeldung erfolgreich");
                 System.out.println("client " + user + " angemeldet.");
@@ -117,7 +123,8 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
     private void abmelden() {
         angemeldet = false;
-        database.removeThreadFromAllGroups(this);
+        database.removeThread(this);
+        angemeldeterNutzer = null;
     }
 
 
@@ -254,16 +261,43 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String group = message.getStringAtIndex(0);
         String empfänger = message.getStringAtIndex(1);
 
-        if (database.createPrivateGroup(this, group, angemeldeterNutzer, empfänger)) {
-            //sendGroupsOfLoggedInUser();
+        if (database.isPrivateGroup(group)) {
+            // die Gruppe besteht schon,
+            // der Empfänger ist bereits drin
+            if (database.privateGroupContainsUser(group, empfänger)) {
+                // Absender hinzufügen
+                database.addToPrivateGroup(this, group, angemeldeterNutzer);
+                // benachrichtige Empfänger und Absender
+                for (ClientHandler ch : database.getThreadsOfGroup(group)) {
+                    ch.sendMessage(ServerBefehl.VERBINDUNG_STARTEN, group);
+                    ch.sendMessage(ServerBefehl.FEEDBACK, group+" eröffnet");
+                }
+            }
+            else {
+                assert(false);
+            }
         }
         else {
-            //sendMessage(ServerBefehl.FEEDBACK, angemeldeterNutzer+" fragt eine private Verbindung an");
+            // wenn es noch keine private Verbindung gibt, erzeuge eine mit diesem Nutzer
+            database.addToPrivateGroup(this, group, angemeldeterNutzer);
+            // und benachrichtige den Empfänger:
+            // TODO
         }
 
         database.getThreadsOfGroup(group).forEach(ClientHandler::sendGroupsOfLoggedInUser);
-
     }
+
+    private void removePrivateChat(Message message) {
+        sendMessageToAllClientsInGroup(message);
+
+        String group = message.getStringAtIndex(0);
+        database.removePrivateGroup(group);
+    }
+
+
+
+
+
 
     private void sendServername() {
         sendMessage(ServerBefehl.SERVERNAME_SETZEN, database.getServerName());
