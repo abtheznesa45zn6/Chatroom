@@ -34,7 +34,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
     ClientGUI(Client client) throws HeadlessException {
         this.client = client;
-        init();
     }
 
 
@@ -79,7 +78,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     int h = (d.height - getSize().height) / 2;
     int k = 20;
 
-    private void init() {
+    void start() {
         setContentPane(mainPanel);
         setSize(w, h);
         setLocationRelativeTo(null);
@@ -425,7 +424,6 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         for (String group : rooms) {
             if (group.contains(privateChatIndicator)){
                 newPrivateGroups.add(group);
-                // TODO Löschen
             }
             else {
                 listModel.addElement(group);

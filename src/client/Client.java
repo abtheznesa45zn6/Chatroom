@@ -16,6 +16,7 @@ class Client extends AbstractClass implements ValidityChecker {
         super(socket);
         // GUI starten und anzeigen
         clientGUI = new ClientGUI(this);
+        clientGUI.start();
     }
 
 
@@ -171,7 +172,7 @@ class Client extends AbstractClass implements ValidityChecker {
     private void updateNicknames(Message message) {
         String user = message.getStringAtIndex(0);
         String nickname = message.getStringAtIndex(1);
-        // here should be a code that doesn't require requesting all nicknames again instead
+        // requests all nicknames
         sendMessage(ServerBefehl.GET_ALL_NICKNAMES);
     }
 
