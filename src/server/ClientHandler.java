@@ -42,6 +42,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case GET_ALL_NICKNAMES -> sendAllNicknames();
             case REQUEST_PRIVATE_CHAT -> requestPrivateChat(message);
             case REMOVE_PRIVATE_CHAT -> removePrivateChat(message);
+            case JOIN_GROUP -> joinGroup(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
@@ -215,7 +216,8 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
      */
     public void sendGroupsOfLoggedInUser() {
         List<String> groups = database.getGroupsForUser(angemeldeterNutzer);
-        sendMessage(ServerBefehl.RECEIVE_GROUPS, groups.toArray(new String[0]));
+        sendMessage(ServerBefehl.RECEIVE_OWN_GROUPS, groups.toArray(new String[0]));
+        sendMessage(ServerBefehl.RECEIVE_PUBLIC_GROUPS, database.getAllPublicGroups().toArray(new String[0]));
     }
 
 
@@ -294,6 +296,25 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         database.removePrivateGroup(group);
     }
 
+    private void joinGroup(Message message) {
+        String group = message.getStringAtIndex(0);
+
+        if (isAngemeldet() && angemeldeterNutzer != null && !(database.isBanned(angemeldeterNutzer))) {
+
+            if (database.getGroupsForUser(angemeldeterNutzer).contains(group)) {
+                sendMessage(ServerBefehl.FEEDBACK, "Du befindesst dich bereits im Raum "+group+".");
+            }
+            else {
+                database.addUserAndThreadToGroup(this, angemeldeterNutzer, group);
+                sendGroupsOfLoggedInUser();
+                sendMessage(ServerBefehl.FEEDBACK, "Du wurdest zum Raum "+group+" hinzugefügt.");
+            }
+
+        }
+        else {
+            sendMessage(ServerBefehl.FEEDBACK, "Du konntest nicht zum Raum "+group+" hinzugefügt werden.");
+        }
+    }
 
 
 

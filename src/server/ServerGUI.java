@@ -415,7 +415,7 @@ public class ServerGUI extends JFrame implements ValidityChecker {
     }
 
     private void updateRäume() {
-        List<String> groups = database.getAllGroups();
+        List<String> groups = database.getAllPublicGroups();
 
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (String group : groups) {

@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -53,6 +52,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     private JTextArea textAreaBenutzer;
     private JTextArea textAreaRäume;
     private JMenu benutzer;
+    private JMenu raum;
     private JButton buttonSenden;
     private JLabel verbindung;
     private JLabel status;
@@ -119,7 +119,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
         JMenu profil = new JMenu("Profil");
         benutzer = new JMenu("Benutzer");
-        JMenu raum = new JMenu("Raum");
+        raum = new JMenu("Raum");
         JMenu optionen = new JMenu("Optionen");
         JMenu senden = new JMenu("Senden");
         menuBar.add(profil);
@@ -417,7 +417,8 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         card1.setVisible(false);
     }
 
-    void updateRooms (ArrayList<String> rooms) {
+
+    void updateGroups(ArrayList<String> rooms) {
         DefaultListModel<String> listModel = new DefaultListModel<>();
         HashSet<String> newPrivateGroups = new HashSet<>();
 
@@ -444,7 +445,8 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         }
     }
 
-    void updateUserList(ArrayList<String> users) {
+    void updateUserMenu(ArrayList<String> users) {
+        benutzer.removeAll();
         for (String user : users) {
             // falls es der Nutzer selbst ist, nicht hinzufügen
             // beim ersten Mal ist der Nutzername nur im benutzernameTextField vorhanden
@@ -467,8 +469,23 @@ public class ClientGUI extends JFrame implements ValidityChecker {
                     privateChatGUI.start(PrivateChatStatus.KEINE_VERBINDUNG);
                 }
             });
-
             benutzer.add(jMenu);
+        }
+    }
+
+
+    void updateGroupMenu(ArrayList<String> groups) {
+        raum.removeAll();
+        for (String group : groups) {
+            JMenu jMenu = new JMenu(group);
+            JMenuItem item = new JMenuItem("Beitreten");
+            jMenu.add(item);
+
+            item.addActionListener(event -> {
+                String clickedGroup = jMenu.getText();
+                client.sendJoinGroup(clickedGroup);
+            });
+            raum.add(jMenu);
         }
     }
 

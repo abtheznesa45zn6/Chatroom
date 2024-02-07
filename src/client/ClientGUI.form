@@ -289,7 +289,7 @@
                     <border type="none"/>
                     <children>
                       <tabbedpane id="599bf" binding="tabbedPane1" default-binding="true">
-                        <constraints border-constraint="North"/>
+                        <constraints border-constraint="Center"/>
                         <properties/>
                         <border type="none"/>
                         <children>

@@ -59,7 +59,8 @@ class Client extends AbstractClass implements ValidityChecker {
             case TEXT_MESSAGE -> receiveTextMessage(message);
             case PDF_MESSAGE -> receivePDFMessage(message);
             case PICTURE_MESSAGE -> receivePictureMessage(message);
-            case RECEIVE_GROUPS -> receiveGroups(message);
+            case RECEIVE_PUBLIC_GROUPS -> receivePublicGroups(message);
+            case RECEIVE_OWN_GROUPS -> receiveOwnGroups(message);
             case RECEIVE_USER_LIST_OF_GROUP -> receiveUserList(message);
             case RECEIVE_COMPLETE_USER_LIST -> receiveCompleteUserList(message);
             case SET_NICKNAME -> updateNicknames(message);
@@ -150,9 +151,14 @@ class Client extends AbstractClass implements ValidityChecker {
         }
     }
 
-    private void receiveGroups(Message message) {
+    private void receivePublicGroups(Message message) {
         var groups = new ArrayList<String>(Arrays.asList(message.getStringArray()));
-        clientGUI.updateRooms(groups);
+        clientGUI.updateGroupMenu(groups);
+    }
+
+    private void receiveOwnGroups(Message message) {
+        var groups = new ArrayList<String>(Arrays.asList(message.getStringArray()));
+        clientGUI.updateGroups(groups);
     }
 
     private void receiveUserList(Message message) {
@@ -165,7 +171,7 @@ class Client extends AbstractClass implements ValidityChecker {
 
     private void receiveCompleteUserList(Message message) {
         var users = new ArrayList<String>(Arrays.asList(message.getStringArray()));
-        clientGUI.updateUserList(users);
+        clientGUI.updateUserMenu(users);
     }
 
 
@@ -255,5 +261,9 @@ class Client extends AbstractClass implements ValidityChecker {
     private void verbindungStarten(Message message) {
         String group = message.getStringAtIndex(0);
         clientGUI.verbindungStarten(group);
+    }
+
+    public void sendJoinGroup(String group) {
+        sendMessage(ServerBefehl.JOIN_GROUP, group);
     }
 }

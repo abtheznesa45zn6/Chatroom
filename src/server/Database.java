@@ -636,7 +636,7 @@ class Database implements ValidityChecker {
         }
     }
 
-    List<String> getAllGroups() {
+    List<String> getAllPublicGroups() {
         List<String> allGroups = new ArrayList<>();
 
         try {
