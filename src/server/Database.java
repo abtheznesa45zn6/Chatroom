@@ -762,7 +762,7 @@ class Database implements ValidityChecker {
     }
 
     public void createPublicGroup(String groupName) {
-        if (checkValidityOfPublicGroup(groupName)){return;}
+        if (!checkValidityOfPublicGroup(groupName)){return;}
         try {
             semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
             try (Connection connection = DriverManager.getConnection(dataSource.getUrl());

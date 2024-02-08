@@ -44,6 +44,10 @@ public class Message implements Serializable {
         }
     }
 
+    public LocalDateTime getDate() {
+        return time;
+    }
+
     public String[] getStringArray() {
         return stringArray;
     }

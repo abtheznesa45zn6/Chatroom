@@ -302,7 +302,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         if (isAngemeldet() && angemeldeterNutzer != null && !(database.isBanned(angemeldeterNutzer))) {
 
             if (database.getGroupsForUser(angemeldeterNutzer).contains(group)) {
-                sendMessage(ServerBefehl.FEEDBACK, "Du befindesst dich bereits im Raum "+group+".");
+                sendMessage(ServerBefehl.FEEDBACK, "Du befindest dich bereits im Raum "+group+".");
             }
             else {
                 database.addUserAndThreadToGroup(this, angemeldeterNutzer, group);

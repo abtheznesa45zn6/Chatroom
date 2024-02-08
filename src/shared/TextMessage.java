@@ -11,11 +11,6 @@ public class TextMessage extends Message {
     public String getGroup() {
         return getStringAtIndex(0);
     }
-
-    public LocalDateTime getDate() {
-        return time;
-    }
-
     public String getUser() {
         return getStringAtIndex(1);
     }

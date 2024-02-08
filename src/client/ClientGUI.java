@@ -486,8 +486,12 @@ public class ClientGUI extends JFrame implements ValidityChecker {
                 client.sendJoinGroup(clickedGroup);
             });
             raum.add(jMenu);
+
+            // TODO addItem "Verlassen"
         }
     }
+
+
 
     private String getPrivateGroupNameOfGroupWithUser(String user1) {
         String user2 = client.getAngemeldeterNutzer();
