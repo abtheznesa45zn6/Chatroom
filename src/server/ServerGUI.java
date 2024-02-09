@@ -251,9 +251,9 @@ public class ServerGUI extends JFrame implements ValidityChecker {
 
             if (database.addUserAndThreadToGroup(currentUser, currentGroup)) {
 
-                updateGroupsInClientsOfGroup(currentGroup);
+                updateGroupsOfClientInGroup(currentGroup);
                 feedbackLabel.setText("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
-                Logger.logVerwaltung("User "+currentUser+" wurde zum Raum "+currentGroup+" hinzugefügt.");
+                sendMessageOfAdditionToGroupToClient(currentGroup, currentUser);
             }
             else {
                 // TODO this is activated even if the user was added successfully
@@ -267,9 +267,18 @@ public class ServerGUI extends JFrame implements ValidityChecker {
         currentAufgabe = Aufgabe.SERVERNAME_SETZEN;
     }
 
-    private void updateGroupsInClientsOfGroup(String group) {
+    private void updateGroupsOfClientInGroup(String group) {
         database.getThreadsOfGroup(group).forEach(ClientHandler::sendGroupsOfLoggedInUser);
     }
+
+    private void sendMessageOfAdditionToGroupToClient(String group, String user) {
+        Message message = new Message(ServerBefehl.FEEDBACK, new String[] {"Du wurdest zum Raum "+group+" hinzugefügt."});
+        database.getThreadsOfGroup(group)
+                .stream()
+                .filter(thread -> thread.getAngemeldeterNutzer().equals(user))
+                .forEach(thread -> thread.sendMessage(message));
+    }
+
 
     private void servernameSetzen(String newName) {
         Logger.logVerwaltung("Servername setzen auf "+newName);

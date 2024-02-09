@@ -35,4 +35,11 @@ public class Logger {
     public static void logServer(String s) {
         LOG_3.info(s);
     }
+
+    public static void logAddUserToGroup(String user, String group) {
+        LOG_3.info("User "+user+" wurde zum Raum "+group+" hinzugefügt.");
+    }
+    public static void logRemoveUserFromGroup(String user, String group) {
+        LOG_3.info("User "+user+" wurde von Raum "+group+" entfernt.");
+    }
 }

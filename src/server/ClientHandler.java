@@ -12,12 +12,12 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         super(socket);
     }
     private final Database database = Database.getInstance();
-    private ServerGUI serverGUI = ServerGUI.getInstance();
+    private final ServerGUI serverGUI = ServerGUI.getInstance();
 
     @Override
     protected void dingeTun() {
       listenAndExecute();
-      database.removeThread(this);
+      database.removeThreadFromAll(this);
     }
 
 
@@ -43,6 +43,7 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             case REQUEST_PRIVATE_CHAT -> requestPrivateChat(message);
             case REMOVE_PRIVATE_CHAT -> removePrivateChat(message);
             case JOIN_GROUP -> joinGroup(message);
+            case LEAVE_GROUP -> leaveGroup(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
         }
     }
@@ -120,14 +121,11 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     }
 
 
-
-
     private void abmelden() {
         angemeldet = false;
-        database.removeThread(this);
+        database.removeThreadFromAll(this);
         angemeldeterNutzer = null;
     }
-
 
 
     private void receiveTextMessage(Message message) {
@@ -300,7 +298,6 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
         String group = message.getStringAtIndex(0);
 
         if (isAngemeldet() && angemeldeterNutzer != null && !(database.isBanned(angemeldeterNutzer))) {
-
             if (database.getGroupsForUser(angemeldeterNutzer).contains(group)) {
                 sendMessage(ServerBefehl.FEEDBACK, "Du befindest dich bereits im Raum "+group+".");
             }
@@ -309,7 +306,25 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
                 sendGroupsOfLoggedInUser();
                 sendMessage(ServerBefehl.FEEDBACK, "Du wurdest zum Raum "+group+" hinzugefügt.");
             }
+        }
+        else {
+            sendMessage(ServerBefehl.FEEDBACK, "Du konntest nicht zum Raum "+group+" hinzugefügt werden.");
+        }
+    }
 
+    private void leaveGroup(Message message) {
+        String group = message.getStringAtIndex(0);
+
+        if (isAngemeldet() && angemeldeterNutzer != null) {
+            if (database.getGroupsForUser(angemeldeterNutzer).contains(group)) {
+
+                database.removeUserAndThreadFromPublicGroup(this, angemeldeterNutzer, group);
+                sendGroupsOfLoggedInUser();
+                sendMessage(ServerBefehl.FEEDBACK, "Du hast den Raum "+group+" verlassen.");
+            }
+            else {
+                sendMessage(ServerBefehl.FEEDBACK, "Du bist nicht in Raum "+group+".");
+            }
         }
         else {
             sendMessage(ServerBefehl.FEEDBACK, "Du konntest nicht zum Raum "+group+" hinzugefügt werden.");

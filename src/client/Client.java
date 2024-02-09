@@ -266,4 +266,8 @@ class Client extends AbstractClass implements ValidityChecker {
     public void sendJoinGroup(String group) {
         sendMessage(ServerBefehl.JOIN_GROUP, group);
     }
+
+    public void sendLeaveGroup(String group) {
+        sendMessage(ServerBefehl.LEAVE_GROUP, group);
+    }
 }

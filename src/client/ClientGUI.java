@@ -478,16 +478,23 @@ public class ClientGUI extends JFrame implements ValidityChecker {
         raum.removeAll();
         for (String group : groups) {
             JMenu jMenu = new JMenu(group);
-            JMenuItem item = new JMenuItem("Beitreten");
-            jMenu.add(item);
+            JMenuItem beitreten = new JMenuItem("Beitreten");
+            jMenu.add(beitreten);
 
-            item.addActionListener(event -> {
+            beitreten.addActionListener(event -> {
                 String clickedGroup = jMenu.getText();
                 client.sendJoinGroup(clickedGroup);
             });
-            raum.add(jMenu);
 
-            // TODO addItem "Verlassen"
+            JMenuItem verlassen = new JMenuItem("Verlassen");
+            jMenu.add(verlassen);
+
+            verlassen.addActionListener(event -> {
+                String clickedGroup = jMenu.getText();
+                client.sendLeaveGroup(clickedGroup);
+            });
+
+            raum.add(jMenu);
         }
     }
 

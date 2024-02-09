@@ -39,6 +39,8 @@ class Database implements ValidityChecker {
         return NestedSingletonHelper.databaseSingleton;
     }
 
+
+
     private static class NestedSingletonHelper {
         public static Database databaseSingleton = new Database();
     }
@@ -230,7 +232,7 @@ class Database implements ValidityChecker {
         }
 
 
-    void removeThread(ClientHandler thread) {
+    void removeThreadFromAll(ClientHandler thread) {
         allThreads.remove(thread);
 
         synchronized (groupAndThread) {
@@ -344,6 +346,13 @@ class Database implements ValidityChecker {
         groupAndThread.computeIfAbsent(group, k -> new HashSet<>()).add(clientHandler);
     }
 
+    private void removeThreadFromGroup(ClientHandler clientHandler, String group) {
+        groupAndThread.computeIfPresent(group, (k, v) -> {
+            v.remove(clientHandler);
+            return v;
+        });
+    }
+
     // ChatGPT
     private boolean addUserToGroup(String user, String group) {
         try {
@@ -351,6 +360,7 @@ class Database implements ValidityChecker {
         } catch (InterruptedException e) {
             return false;
         }
+
         try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
             // Get user and group IDs
             int userId = getUserIdByUsername(connection, user);
@@ -363,6 +373,36 @@ class Database implements ValidityChecker {
                 preparedStatement.setInt(2, groupId);
                 preparedStatement.executeUpdate();
             }
+            Logger.logAddUserToGroup(user, group);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            semaphoreSQLite.release();
+        }
+        return false;
+    }
+
+    private boolean removeUserFromPublicGroup(String user, String group) {
+        try {
+            semaphoreSQLite.acquire();
+        } catch (InterruptedException e) {
+            return false;
+        }
+
+        try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+            // Get user and group IDs
+            int userId = getUserIdByUsername(connection, user);
+            int groupId = getGroupIdByName(connection, group);
+
+            // Insert into user_groups table
+            String query = "DELETE FROM user_groups WHERE user_id = ? AND group_id = ?"; // TODO [SQLITE_ERROR] SQL error or missing database (near "(": syntax error)
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, userId);
+                preparedStatement.setInt(2, groupId);
+                preparedStatement.executeUpdate();
+            }
+            Logger.logRemoveUserFromGroup(user, group);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -404,9 +444,13 @@ class Database implements ValidityChecker {
     public void addGroup(String groupName) {
         try {
             semaphoreSQLite.acquire();
-            try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
-                // Check if the group already exists
-                if (groupExists(connection, groupName)) {
+        } catch (InterruptedException e) {
+            return;
+        }
+
+        try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
+            // Check if the group already exists
+            if (groupExists(connection, groupName)) {
                     System.out.println("Group already exists: " + groupName);
                     return;
                 }
@@ -417,8 +461,7 @@ class Database implements ValidityChecker {
                     preparedStatement.setString(1, groupName);
                     preparedStatement.executeUpdate();
                 }
-            }
-        } catch (InterruptedException | SQLException e) {
+            } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             semaphoreSQLite.release();
@@ -568,6 +611,12 @@ class Database implements ValidityChecker {
         addThreadToGroup(thread, group);
         addUserToGroup(user, group);
     }
+
+    public void removeUserAndThreadFromPublicGroup(ClientHandler clientHandler, String user, String group) {
+        removeThreadFromGroup(clientHandler, group);
+        removeUserFromPublicGroup(user, group);
+    }
+
 
     HashSet<ClientHandler> getThreadsOfGroup(String group) {
         return groupAndThread.get(group);
