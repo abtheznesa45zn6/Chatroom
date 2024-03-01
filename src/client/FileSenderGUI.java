@@ -1,6 +1,5 @@
 package client;
 
-import shared.Message;
 import shared.PDFMessage;
 import shared.PictureMessage;
 import shared.ServerBefehl;
