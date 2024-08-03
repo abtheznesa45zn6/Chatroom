@@ -323,9 +323,9 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     void resetStatus(){
-        statusLabel.setText("zu keinem Server verbunden.");
+        statusLabel.setText("bei keinem Server angemeldet.");
         //verbindungLabel.setText("nicht angemeldet.");
-        verbindungLabel.setText("");
+        verbindungLabel.setText("verbunden mit 127.0.0.1");
     }
 
 
@@ -548,7 +548,7 @@ public class ClientGUI extends JFrame implements ValidityChecker {
     }
 
     public void setServerName(String newName) {
-        statusLabel.setText("verbunden mit Server "+newName+".");
+        statusLabel.setText("angemeldet beim Server "+newName+".");
     }
 
     public void erstelleRaum(String groupName) {

@@ -23,7 +23,7 @@ class Client extends AbstractClass implements ValidityChecker {
     public static void main(String[] args) {
 
         final int port = 3141;
-        final String host = "localhost";
+        final String host = "127.0.0.1";
 
         try (Socket socket = new Socket(host, port)) {
             Client client = new Client(socket);

@@ -154,10 +154,6 @@
                               <verticalTextPosition value="0"/>
                             </properties>
                           </component>
-                          <component id="6221b" class="javax.swing.JList" binding="serverList">
-                            <constraints border-constraint="Center"/>
-                            <properties/>
-                          </component>
                         </children>
                       </grid>
                     </children>
@@ -257,6 +253,10 @@
                   </grid>
                 </children>
               </grid>
+              <component id="6221b" class="javax.swing.JList" binding="serverList">
+                <constraints border-constraint="Center"/>
+                <properties/>
+              </component>
             </children>
           </grid>
         </children>
