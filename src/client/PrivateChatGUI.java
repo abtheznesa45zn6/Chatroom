@@ -8,22 +8,18 @@ import java.awt.event.WindowEvent;
 import static client.PrivateChatStatus.*;
 
 public class PrivateChatGUI extends JFrame {
-    private Client client;
+    private final Client client;
     ClientGUI clientGUI;
-    private String group;
-    private String empfänger;
+    private final String group;
+    private final String empfaenger;
 
-
-    PrivateChatGUI(Client client, ClientGUI clientGUI, String group, String empfänger) {
+    PrivateChatGUI(Client client, ClientGUI clientGUI, String group, String empfaenger) {
         this.client = client;
         this.clientGUI = clientGUI;
         this.group = group;
-        this.empfänger = empfänger;
+        this.empfaenger = empfaenger;
 
         init();
-    }
-
-    private PrivateChatGUI() {
     }
 
     private JPanel mainPanel;
@@ -32,23 +28,56 @@ public class PrivateChatGUI extends JFrame {
     private JPanel aufbauenVerbindungCard;
     private JPanel aufgebauteVerbindungCard;
     private JTextArea chatAusgabe;
-    private JScrollPane chatAusgabeScrollPane;
     private JTextField chatEingabe;
     private JButton buttonSenden;
-    private JPanel cards;
+    private JScrollPane chatAusgabeScrollPane;
 
-    public static void main(String[] args) {
-        PrivateChatGUI privateChatGUI = new PrivateChatGUI();
-        privateChatGUI.init();
-        privateChatGUI.start(VERBINDUNG_AUFGEBAUT);
+    private void init() {
+        setTitle("Private Verbindung mit "+ empfaenger);
+        setContentPane(mainPanel);
+        setWindowSize();
+        setLocationRelativeTo(null);
+        setResizable(true);
+
+        initKeineVerbindungCard(); //Card 1
+        initAufgebauteVerbindungCard(); //Card 3
+
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        this.addWindowListener(
+                new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        clientGUI.removePrivateGroup(group);
+                        client.sendRemovePrivateGroup(group);
+                    }
+                });
     }
 
-    Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-    int w = (d.width - getSize().width) / 5;
-    int h = (d.height - getSize().height) / 4;
+    private void setWindowSize() {
+        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+        int w = (d.width - getSize().width) / 5;
+        int h = (d.height - getSize().height) / 4;
+        setSize(w, h);
+    }
 
+    private void initKeineVerbindungCard() {
+        keineVerbindungButton.addActionListener(e -> {
+            setCard(VERBINDUNGSAUFBAU);
+            clientGUI.groupAndChat.put(group, this);
+            client.requestPrivateChat(group, empfaenger);
+        });
+    }
 
-    void start(PrivateChatStatus status) {
+    private void initAufgebauteVerbindungCard() {
+        buttonSenden.addActionListener(e -> {
+            String textMessage = chatEingabe.getText();
+            chatEingabe.setText("");
+
+            client.sendTextMessage(group, textMessage);
+        });
+    }
+
+    void show(PrivateChatStatus status) {
         setCard(status);
         setVisible(true);
     }
@@ -64,49 +93,6 @@ public class PrivateChatGUI extends JFrame {
         }
     }
 
-    private void init() {
-        setTitle("Private Verbindung mit "+empfänger);
-        setContentPane(mainPanel);
-        setSize(w, h);
-        setLocationRelativeTo(null);
-        setResizable(true);
-
-        initCard1();
-        initCard2();
-        initCard3();
-
-        // Window close operation
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        this.addWindowListener(
-                new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        clientGUI.removePrivateGroup(group);
-                        client.sendRemovePrivateGroup(group);
-                    }
-                });
-    }
-
-    private void initCard1() {
-        keineVerbindungButton.addActionListener(e -> {
-            setCard(VERBINDUNGSAUFBAU);
-            clientGUI.groupAndChat.put(group, this);
-            client.requestPrivateChat(group, empfänger);
-        });
-    }
-
-    private void initCard2() {
-    }
-
-    private void initCard3() {
-        buttonSenden.addActionListener(e -> {
-            String textMessage = chatEingabe.getText();
-            chatEingabe.setText("");
-
-            client.sendTextMessage(group, textMessage);
-        });
-    }
-
     JTextArea getChatAusgabe() {
         return chatAusgabe;
     }
@@ -116,9 +102,3 @@ public class PrivateChatGUI extends JFrame {
         setCard(VERBINDUNG_AUFGEBAUT);
     }
 }
-
-
-
-
-
-

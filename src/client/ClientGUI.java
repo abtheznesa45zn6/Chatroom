@@ -463,10 +463,10 @@ public class ClientGUI extends JFrame implements ValidityChecker {
 
                 PrivateChatGUI privateChatGUI = new PrivateChatGUI(client, this, getPrivateGroupNameOfGroupWithUser(clickedUser), clickedUser);
                 if (hasPrivateGroupWith(clickedUser)) {
-                    privateChatGUI.start(PrivateChatStatus.VERBINDUNG_AUFGEBAUT);
+                    privateChatGUI.show(PrivateChatStatus.VERBINDUNG_AUFGEBAUT);
                 }
                 else {
-                    privateChatGUI.start(PrivateChatStatus.KEINE_VERBINDUNG);
+                    privateChatGUI.show(PrivateChatStatus.KEINE_VERBINDUNG);
                 }
             });
             benutzer.add(jMenu);
