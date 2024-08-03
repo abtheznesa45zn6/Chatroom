@@ -1,7 +1,7 @@
 
 # Chatroom
 
-Kommunikationssystem basierend auf Sockets und Streams mit GUI realisiert als Client-Server-Anwendung. Programmiert im Rahmen des Fortgeschrittenen Programmierpraktikums an der Friedirch Schiller Universität.
+Kommunikationssystem basierend auf Sockets und Streams mit GUI realisiert als Client-Server-Anwendung. Programmiert im Rahmen des Fortgeschrittenen Programmierpraktikums an der Friedrich-Schiller-Universität Jena.
 
 
 ## Features
@@ -14,8 +14,8 @@ Kommunikationssystem basierend auf Sockets und Streams mit GUI realisiert als Cl
 - private Räume für zwei Nutzer
 - mehrere Räume mit unterschiedlichen Nutzern
 - Anzeige der Namen aller Benutzer in den jeweiligen Räumen
-- Erstellen, Umbenennen, und Löschen von Räumen
-- Visualisierung aller Aktivitäten nach dem Starten des Servers bis zum Beenden im Bezug auf Verbindung, Kommunikation und Verwaltung; Loggen der Ereignisse in einer Datei
+- Erstellen, Umbenennen und Löschen von Räumen
+- Visualisierung aller Aktivitäten nach dem Starten des Servers bis zum Beenden in Bezug auf Verbindung, Kommunikation und Verwaltung; Loggen der Ereignisse in einer Datei
 - dauerhafte Speicherung der Benutzerdaten
 - Verwarnen von Benutzern
 - Temporäres Ausschließen von Benutzern
