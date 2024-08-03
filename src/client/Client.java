@@ -18,7 +18,7 @@ class Client extends AbstractClass implements ValidityChecker {
         clientGUI = new ClientGUI(this);
         clientGUI.start();
     }
-
+jk
 
     public static void main(String[] args) {
 
