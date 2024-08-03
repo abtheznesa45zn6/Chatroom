@@ -1,7 +1,5 @@
 package shared;
 
-import java.time.LocalDateTime;
-
 public class TextMessage extends Message {
 
     public TextMessage(ServerBefehl aktion, String[] stringArray) {
@@ -21,7 +19,6 @@ public class TextMessage extends Message {
 
     @Override
     public String toString() {
-        //return "Message{group=" + group + ",date=" + date + ",user=" + user + ",text=" + text + "}";
         return getGroup() + " | " + getDate() + " | " + getUser() + " | " + getText();
     }
 }

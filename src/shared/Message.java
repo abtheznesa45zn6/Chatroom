@@ -89,12 +89,4 @@ public class Message implements Serializable {
     {
         System.out.println("readObjectNoData()");
     }
-
-    public void setStringAtIndex(int index, String newValue) {
-        if (index >= 0 && index < stringArray.length) {
-            stringArray[index] = newValue;
-        } else {
-            throw new IndexOutOfBoundsException("Index out of bounds");
-        }
-    }
 }

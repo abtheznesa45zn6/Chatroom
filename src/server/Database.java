@@ -9,21 +9,19 @@ import java.util.concurrent.Semaphore;
 
 /**
  * benutzt Nutzername als unique identifier
- * benutzt Raumname als unique identifier -> kann zu Bugs führen, da der Name änderbar ist
+ * benutzt Raumname als unique identifier → kann zu Bugs führen, da der Name änderbar ist
  */
 class Database implements ValidityChecker {
     private final PwAuthenticator passwordAuthenticator = new PwAuthenticator();
     private final SQLiteDataSource dataSource;
     private final Semaphore semaphoreSQLite;
-    // speichert Benutzername und Passwort
 
-    final Map<String, String> userAndPassword = Collections.synchronizedMap(new HashMap<String, String>());
 
     // groupAndThread: Speichert ClientHandler nach den Gruppen ab, in denen der dazugehörige User ist
-    final Map<String, HashSet<ClientHandler>> groupAndThread = Collections.synchronizedMap(new HashMap<String, HashSet<ClientHandler>>());
+    final Map<String, HashSet<ClientHandler>> groupAndThread = Collections.synchronizedMap(new HashMap<>());
     final Set<ClientHandler> allThreads = Collections.synchronizedSet(new HashSet<>());
 
-    final Map<String, ArrayList<Message>> messages = Collections.synchronizedMap(new HashMap<String, ArrayList<Message>>());
+    final Map<String, ArrayList<Message>> messages = Collections.synchronizedMap(new HashMap<>());
     Map<String, Set<String>> privateGroups = Collections.synchronizedMap(new HashMap<>());
 
 
@@ -212,7 +210,7 @@ class Database implements ValidityChecker {
         try {
             semaphoreSQLite.acquire(); // Acquire the permit before accessing the shared resource
             try (Connection connection = DriverManager.getConnection(dataSource.getUrl());
-                 PreparedStatement statement = connection.prepareStatement("SELECT IS_BANNED FROM users WHERE username = ?");
+                 PreparedStatement statement = connection.prepareStatement("SELECT IS_BANNED FROM users WHERE username = ?")
             ) {
                 statement.setString(1, username);
                 try (ResultSet resultSet = statement.executeQuery()) {
@@ -246,15 +244,6 @@ class Database implements ValidityChecker {
     }
 
     public HashSet<ClientHandler> getAllThreads() {
-        /*
-        HashSet<ClientHandler> allClientHandlers = new HashSet<>();
-        synchronized (groupAndThread) {
-            for (HashSet<ClientHandler> clientHandlers : groupAndThread.values()) {
-                allClientHandlers.addAll(clientHandlers);
-            }
-        }
-        return allClientHandlers;
-         */
         return new HashSet<>(allThreads);
     }
 
@@ -271,7 +260,6 @@ class Database implements ValidityChecker {
                     try (ResultSet resultSet = preparedStatement.executeQuery()) {
                         if (resultSet.next()) {
                             String storedPassword = resultSet.getString("password");
-                            // Use a secure password hashing and validation method
                             isValid = validatePassword(password, storedPassword);
                         }
                     }
@@ -312,22 +300,9 @@ class Database implements ValidityChecker {
         }
     }
 
-
-    // Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
-    String getPasswordForUser(String username) {
-        return userAndPassword.get(username);
-    }
-
-
-    void setUserAndPassword(String username, String password) {
-        userAndPassword.put(username, password);
-    }
-
-
     boolean isRegistriert(String username) {
         return getAllUsers().contains(username);
     }
-
 
     void addMessage(Message message) {
         String group = message.getStringAtIndex(0);
@@ -439,46 +414,6 @@ class Database implements ValidityChecker {
         }
         throw new SQLException("Group not found: " + groupName);
     }
-
-
-    public void addGroup(String groupName) {
-        try {
-            semaphoreSQLite.acquire();
-        } catch (InterruptedException e) {
-            return;
-        }
-
-        try (Connection connection = DriverManager.getConnection(dataSource.getUrl())) {
-            // Check if the group already exists
-            if (groupExists(connection, groupName)) {
-                    System.out.println("Group already exists: " + groupName);
-                    return;
-                }
-
-                // Insert into groups table
-                String query = "INSERT INTO groups (group_name) VALUES (?)";
-                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                    preparedStatement.setString(1, groupName);
-                    preparedStatement.executeUpdate();
-                }
-            } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            semaphoreSQLite.release();
-        }
-    }
-
-    private boolean groupExists(Connection connection, String groupName) throws SQLException {
-        String query = "SELECT 1 FROM groups WHERE group_name = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, groupName);
-
-            try (var resultSet = preparedStatement.executeQuery()) {
-                return resultSet.next();
-            }
-        }
-    }
-
 
     public void addUser(String username, String password) {
         addNewUser(username);
@@ -858,8 +793,4 @@ class Database implements ValidityChecker {
         groupAndThread.remove(group);
         System.out.println(group+" deleted");
     }
-
-
 }
-
-

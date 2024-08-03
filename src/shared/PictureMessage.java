@@ -1,7 +1,5 @@
 package shared;
 
-import java.util.Arrays;
-
 public class PictureMessage extends Message {
     public PictureMessage(ServerBefehl aktion, String[] stringArray) {
         super(aktion, stringArray);
@@ -19,6 +17,4 @@ public class PictureMessage extends Message {
     public String toString() {
         return aktion + " | " + getGroup() + " | " + getDate() + " | " + "Größe des Strings: "+getPictureAsString().length();
     }
-
-
 }

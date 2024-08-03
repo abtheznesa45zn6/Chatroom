@@ -7,10 +7,7 @@ import java.io.*;
 import java.util.*;
 
 class Client extends AbstractClass implements ValidityChecker {
-    private Set<String> userList = new TreeSet<>();
-    private String angemeldetesPasswort;
     private final ClientGUI clientGUI;
-    private final static Map<String, ArrayList<Message>> messages = new HashMap<String, ArrayList<Message>>();
 
     Client(Socket socket) {
         super(socket);
@@ -18,7 +15,6 @@ class Client extends AbstractClass implements ValidityChecker {
         clientGUI = new ClientGUI(this);
         clientGUI.start();
     }
-
 
     public static void main(String[] args) {
 
@@ -75,7 +71,7 @@ class Client extends AbstractClass implements ValidityChecker {
             case REMOVE_PRIVATE_CHAT -> removePrivateGroup(message);
             case VERBINDUNG_STARTEN -> verbindungStarten(message);
             default -> throw new IllegalStateException("Wrong enum: " + message.getAktion());
-        };
+        }
     }
 
 

@@ -81,7 +81,6 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
 
         if (database.isBanned(user)) {
             sendMessage(ServerBefehl.FEEDBACK, "Benutzer ist gebannt");
-            return;
         }
         else
 
@@ -154,11 +153,6 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
     }
 
     private void receiveDataMessage(Message message) {
-        /*
-        String group = message.getStringAtIndex(0);
-        String angemeldeterNutzer = message.getStringAtIndex(1);
-        String data = message.getStringAtIndex(2);
-         */
         database.addMessage(message);
         sendMessageToAllClientsInGroup(message);
     }
@@ -171,13 +165,6 @@ class ClientHandler extends AbstractClass implements ValidityChecker {
             for (ClientHandler serverThread : users) {
                 serverThread.sendMessageToClient(message);
             }
-        }
-    }
-
-    private void sendTextMessageToAllClients(Message message) {
-        HashSet<ClientHandler> clients = database.getAllThreads();
-        for (ClientHandler client : clients) {
-            sendMessage(message);
         }
     }
 

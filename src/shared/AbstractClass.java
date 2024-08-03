@@ -122,43 +122,6 @@ public abstract class AbstractClass extends Thread {
         }
     }
 
-
-    protected String readText() {
-        try {
-            return (String) in.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Exception bei readText");
-            //Thread.currentThread().interrupt();
-        }
-        return null;
-    }
-
-    protected Integer readInt() {
-        try {
-            return (Integer) in.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Exception bei readText");
-            //Thread.currentThread().interrupt();
-        }
-        return null;
-    }
-
-    protected void write(String text) {
-        try {
-            out.writeObject(text);
-        } catch (IOException e) {
-            System.out.println("Exception bei write String");
-        }
-    }
-
-    protected void write(int zahl) {
-        try {
-            out.writeObject(zahl);
-        } catch (IOException e) {
-            System.out.println("Exception bei write Integer");
-        }
-    }
-
     public boolean isAngemeldet() {
         return angemeldet;
     }
