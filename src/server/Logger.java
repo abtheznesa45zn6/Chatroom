@@ -2,7 +2,6 @@ package server;
 
 import org.slf4j.LoggerFactory;
 import shared.Message;
-
 import java.net.Socket;
 
 public class Logger {
@@ -16,16 +15,16 @@ public class Logger {
         Logger.LOG_1.info(message.toString());
     }
 
-    public static void logVerbindung(String s) {
-        Logger.LOG_2.info(s);
-    }
-
     public static void logVerbindungsaufbau(Socket socket) {
-        LOG_2.info("Verbindung mit Client wird aufgebaut. Socket InetAddress: "+socket.getInetAddress());
+        logVerbindung("Verbindung mit Client wird aufgebaut. Socket InetAddress: "+socket.getInetAddress());
     }
 
     public static void logVerbindungstrennung(Socket socket, String angemeldeterNutzer) {
-        LOG_2.info("Verbindung mit Client wurde unterbrochen. Socket InetAddress: "+socket.getInetAddress()+" \n Zuletzt angemeldeter Nutzername: "+angemeldeterNutzer);
+        logVerbindung("Verbindung mit Client wurde unterbrochen. Socket InetAddress: "+socket.getInetAddress()+" \n Zuletzt angemeldeter Nutzername: "+angemeldeterNutzer);
+    }
+
+    private static void logVerbindung(String s) {
+        Logger.LOG_2.info(s);
     }
 
     public static void logVerwaltung(String s) {
@@ -37,9 +36,9 @@ public class Logger {
     }
 
     public static void logAddUserToGroup(String user, String group) {
-        LOG_3.info("User "+user+" wurde zum Raum "+group+" hinzugefügt.");
+        LOG_3.info("User {} wurde zum Raum {} hinzugefügt.", user, group);
     }
     public static void logRemoveUserFromGroup(String user, String group) {
-        LOG_3.info("User "+user+" wurde von Raum "+group+" entfernt.");
+        LOG_3.info("User {} wurde von Raum {} entfernt.", user, group);
     }
 }
